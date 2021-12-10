@@ -1,17 +1,17 @@
 import time
 import torch.nn as nn
 from stable_baselines3 import PPO
-import pybullet_envs
+import deep_mimic
 from stable_baselines3.common.cmd_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 
 log_dir = "gym_env/output/"
-env_name = 'HumanoidDeepMimicUpperNewSignerBulletEnv-v1'
+env_name = 'HumanoidDeepMimicUpperSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
 
-model = PPO.load(log_dir+"rl_model_50000_steps", env=env)
+model = PPO.load(log_dir+"best_model", env=env)
 
 env.render(mode='human')
 

@@ -1,1 +1,5 @@
 .idea
+*__pycache__
+gym_env
+deep_mimic/gym_env/output
+DeepMimic_for_ASL.egg-info
