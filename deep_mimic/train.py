@@ -39,7 +39,7 @@ model_args = dict(
     seed=8
 )
 
-env_name = 'HumanoidDeepMimicUpperSignerBulletEnv-v1'
+env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path=log_dir)
 tensorboard_callback = TensorboardCallback(verbose=0)
@@ -75,7 +75,7 @@ model = PPO(
     seed=model_args['seed']
 )
 env.save(log_dir+"vecnormalize.pkl")
-n_steps = int(6e7)
+n_steps = int(1e6)
 with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
     model.learn(n_steps, callback=[prog_callback, callback])
 

@@ -7,7 +7,7 @@ p.setRealTimeSimulation(True)
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #used by loadURDF
 p.setGravity(0,0,-10)
 planeId = p.loadURDF("plane.urdf", [0, 0, -1])
-id = p.loadURDF("/home/federico/Git/ASLMimic/data/humanoid/hand.urdf", useFixedBase=True)
+id = p.loadURDF("/home/federico/Git/ASLMimic/data/humanoid/simple_hand_stable_pd.urdf", useFixedBase=True)
 
 n = p.getNumJoints(id)
 print(p.getJointInfo(id, 1))

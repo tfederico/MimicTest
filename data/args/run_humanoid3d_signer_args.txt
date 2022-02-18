@@ -9,11 +9,11 @@
 --char_types general
 --character_files data/characters/humanoid3d.txt
 --enable_char_soft_contact false
---fall_contact_bodies 0 1 2 3 4 6 7 8 9 10 12 13 14
+--fall_contact_bodies 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 
 --char_ctrls ct_pd
 --char_ctrl_files data/controllers/humanoid3d_ctrl.txt
---motion_file data/motions/signer/
+--motion_file data/motions/frank_test.txt
 --sync_char_root_pos true
 --sync_char_root_rot false
 

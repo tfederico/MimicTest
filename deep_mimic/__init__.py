@@ -11,6 +11,13 @@ def register(id, *args, **kvargs):
 # ------------bullet-------------
 
 register(
+    id='HandDeepMimicSignerBulletEnv-v1',
+    entry_point='deep_mimic.gym_env:HandDeepMimicSignerBulletEnv',
+    max_episode_steps=2000,
+    reward_threshold=2000.0,
+)
+
+register(
     id='HumanoidDeepMimicUpperSignerBulletEnv-v1',
     entry_point='deep_mimic.gym_env:HumanoidDeepMimicUpperSignerBulletEnv',
     max_episode_steps=2000,

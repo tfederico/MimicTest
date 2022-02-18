@@ -10,34 +10,36 @@ class HandPoseInterpolator(object):
     def Reset(self,
               base_pos=[0, 0, 0],
               base_orn=[0, 0, 0, 1],
-              thumb_prox=[0, 0, 0, 1],
+              thumb_prox=[0],
               thumb_inter=[0],
-              index_prox=[0, 0, 0, 1],
+              thumb_dist=[0],
+              index_prox=[0],
               index_inter=[0],
               index_dist=[0],
-              middle_prox=[0, 0, 0, 1],
+              middle_prox=[0],
               middle_inter=[0],
               middle_dist=[0],
-              ring_prox=[0, 0, 0, 1],
+              ring_prox=[0],
               ring_inter=[0],
               ring_dist=[0],
-              pinkie_prox=[0, 0, 0, 1],
+              pinkie_prox=[0],
               pinkie_inter=[0],
               pinkie_dist=[0],
-              base_lin_vel=[0, 0, 0],
-              base_ang_vel=[0, 0, 0],
-              thumb_prox_vel=[0, 0, 0],
+              base_lin_vel=[0],
+              base_ang_vel=[0],
+              thumb_prox_vel=[0],
               thumb_inter_vel=[0],
-              index_prox_vel=[0, 0, 0],
+              thumb_dist_vel=[0],
+              index_prox_vel=[0],
               index_inter_vel=[0],
               index_dist_vel=[0],
-              middle_prox_vel=[0, 0, 0],
+              middle_prox_vel=[0],
               middle_inter_vel=[0],
               middle_dist_vel=[0],
-              ring_prox_vel=[0, 0, 0],
+              ring_prox_vel=[0],
               ring_inter_vel=[0],
               ring_dist_vel=[0],
-              pinkie_prox_vel=[0, 0, 0],
+              pinkie_prox_vel=[0],
               pinkie_inter_vel=[0],
               pinkie_dist_vel=[0]):
 
@@ -45,6 +47,7 @@ class HandPoseInterpolator(object):
         self.base_orn = base_orn
         self.thumb_prox = thumb_prox
         self.thumb_inter = thumb_inter
+        self.thumb_dist = thumb_dist
         self.index_prox = index_prox
         self.index_inter = index_inter
         self.index_dist = index_dist
@@ -61,6 +64,7 @@ class HandPoseInterpolator(object):
         self.base_ang_vel = base_ang_vel
         self.thumb_prox_vel = thumb_prox_vel
         self.thumb_inter_vel = thumb_inter_vel
+        self.thumb_dist_vel = thumb_dist_vel
         self.index_prox_vel = index_prox_vel
         self.index_inter_vel = index_inter_vel
         self.index_dist_vel = index_dist_vel
@@ -112,6 +116,7 @@ class HandPoseInterpolator(object):
             *self.base_orn,
             *self.thumb_prox,
             *self.thumb_inter,
+            *self.thumb_dist,
             *self.index_prox,
             *self.index_inter,
             *self.index_dist,
@@ -146,85 +151,91 @@ class HandPoseInterpolator(object):
         self.base_orn = bullet_client.getQuaternionSlerp(baseOrn1Start, baseOrn1Next, frameFraction)
         self.base_ang_vel = self.ComputeAngVel(baseOrn1Start, baseOrn1Next, keyFrameDuration, bullet_client)
 
-        i = 8
-        thumb_prox_start = [frameData[i+1], frameData[i+2], frameData[i+3], frameData[i]]
-        thumb_prox_end = [frameDataNext[i+1], frameDataNext[i+2], frameDataNext[i+3], frameDataNext[i]]
-        self.thumb_prox = bullet_client.getQuaternionSlerp(thumb_prox_start, thumb_prox_end, frameFraction)
-        self.thumb_prox_vel = self.ComputeAngVelRel(thumb_prox_start, thumb_prox_end, keyFrameDuration, bullet_client)
+        i += 4
+        thumb_prox_start = [frameData[i]]
+        thumb_prox_end = [frameDataNext[i]]
+        self.thumb_prox = [thumb_prox_start[0] + frameFraction * (thumb_prox_end[0] - thumb_prox_start[0])]
+        self.thumb_prox_vel = [(thumb_prox_end[0] - thumb_prox_start[0]) / keyFrameDuration]
 
-        i = 12
+        i += 1
         thumb_inter_start = [frameData[i]]
         thumb_inter_end = [frameDataNext[i]]
         self.thumb_inter = [thumb_inter_start[0] + frameFraction * (thumb_inter_end[0] - thumb_inter_start[0])]
         self.thumb_inter_vel = [(thumb_inter_end[0] - thumb_inter_start[0]) / keyFrameDuration]
 
-        i = 13
-        index_prox_start = [frameData[i+1], frameData[i+2], frameData[i+3], frameData[i]]
-        index_prox_end = [frameDataNext[i+1], frameDataNext[i+2], frameDataNext[i+3], frameDataNext[i]]
-        self.index_prox = bullet_client.getQuaternionSlerp(index_prox_start, index_prox_end, frameFraction)
-        self.index_prox_vel = self.ComputeAngVelRel(index_prox_start, index_prox_end, keyFrameDuration, bullet_client)
+        i += 1
+        thumb_dist_start = [frameData[i]]
+        thumb_dist_end = [frameDataNext[i]]
+        self.thumb_dist = [thumb_dist_start[0] + frameFraction * (thumb_dist_end[0] - thumb_dist_start[0])]
+        self.thumb_dist_vel = [(thumb_inter_end[0] - thumb_inter_start[0]) / keyFrameDuration]
 
-        i = 17
+        i += 1
+        index_prox_start = [frameData[i]]
+        index_prox_end = [frameDataNext[i]]
+        self.index_prox = [index_prox_start[0] + frameFraction * (index_prox_end[0] - index_prox_start[0])]
+        self.index_prox_vel = [(index_prox_end[0] - index_prox_start[0]) / keyFrameDuration]
+
+        i += 1
         index_inter_start = [frameData[i]]
         index_inter_end = [frameDataNext[i]]
         self.index_inter = [index_inter_start[0] + frameFraction * (index_inter_end[0] - index_inter_start[0])]
         self.index_inter_vel = [(index_inter_end[0] - index_inter_start[0]) / keyFrameDuration]
 
-        i = 18
+        i += 1
         index_dist_start = [frameData[i]]
         index_dist_end = [frameDataNext[i]]
         self.index_dist = [index_dist_start[0] + frameFraction * (index_dist_end[0] - index_dist_start[0])]
         self.index_dist_vel = [(index_dist_end[0] - index_dist_start[0]) / keyFrameDuration]
 
-        i = 19
-        middle_prox_start = [frameData[i+1], frameData[i+2], frameData[i+3], frameData[i]]
-        middle_prox_end = [frameDataNext[i+1], frameDataNext[i+2], frameDataNext[i+3], frameDataNext[i]]
-        self.middle_prox = bullet_client.getQuaternionSlerp(middle_prox_start, middle_prox_end, frameFraction)
-        self.middle_prox_vel = self.ComputeAngVelRel(middle_prox_start, middle_prox_end, keyFrameDuration, bullet_client)
+        i += 1
+        middle_prox_start = [frameData[i]]
+        middle_prox_end = [frameDataNext[i]]
+        self.middle_prox = [middle_prox_start[0] + frameFraction * (middle_prox_end[0] - middle_prox_start[0])]
+        self.middle_prox_vel = [(middle_prox_end[0] - middle_prox_start[0]) / keyFrameDuration]
 
-        i = 23
+        i += 1
         middle_inter_start = [frameData[i]]
         middle_inter_end = [frameDataNext[i]]
         self.middle_inter = [middle_inter_start[0] + frameFraction * (middle_inter_end[0] - middle_inter_start[0])]
         self.middle_inter_vel = [(middle_inter_end[0] - middle_inter_start[0]) / keyFrameDuration]
 
-        i = 24
+        i += 1
         middle_dist_start = [frameData[i]]
         middle_dist_end = [frameDataNext[i]]
         self.middle_dist = [middle_dist_start[0] + frameFraction * (middle_dist_end[0] - middle_dist_start[0])]
         self.middle_dist_vel = [(middle_dist_end[0] - middle_dist_start[0]) / keyFrameDuration]
 
-        i = 25
-        ring_prox_start = [frameData[i+1], frameData[i+2], frameData[i+3], frameData[i]]
-        ring_prox_end = [frameDataNext[i+1], frameDataNext[i+2], frameDataNext[i+3], frameDataNext[i]]
-        self.ring_prox = bullet_client.getQuaternionSlerp(ring_prox_start, ring_prox_end, frameFraction)
-        self.ring_prox_vel = self.ComputeAngVelRel(ring_prox_start, ring_prox_end, keyFrameDuration, bullet_client)
+        i += 1
+        ring_prox_start = [frameData[i]]
+        ring_prox_end = [frameDataNext[i]]
+        self.ring_prox = [ring_prox_start[0] + frameFraction * (ring_prox_end[0] - ring_prox_start[0])]
+        self.ring_prox_vel = [(ring_prox_end[0] - ring_prox_start[0]) / keyFrameDuration]
 
-        i = 29
+        i += 1
         ring_inter_start = [frameData[i]]
         ring_inter_end = [frameDataNext[i]]
         self.ring_inter = [ring_inter_start[0] + frameFraction * (ring_inter_end[0] - ring_inter_start[0])]
         self.ring_inter_vel = [(ring_inter_end[0] - ring_inter_start[0]) / keyFrameDuration]
 
-        i = 30
+        i += 1
         ring_dist_start = [frameData[i]]
         ring_dist_end = [frameDataNext[i]]
         self.ring_dist = [ring_dist_start[0] + frameFraction * (ring_dist_end[0] - ring_dist_start[0])]
         self.ring_dist_vel = [(ring_dist_end[0] - ring_dist_start[0]) / keyFrameDuration]
 
-        i = 31
-        pinkie_prox_start = [frameData[i+1], frameData[i+2], frameData[i+3], frameData[i]]
-        pinkie_prox_end = [frameDataNext[i+1], frameDataNext[i+2], frameDataNext[i+3], frameDataNext[i]]
-        self.pinkie_prox = bullet_client.getQuaternionSlerp(pinkie_prox_start, pinkie_prox_end, frameFraction)
-        self.pinkie_prox_vel = self.ComputeAngVelRel(pinkie_prox_start, pinkie_prox_end, keyFrameDuration, bullet_client)
+        i += 1
+        pinkie_prox_start = [frameData[i]]
+        pinkie_prox_end = [frameDataNext[i]]
+        self.pinkie_prox = [pinkie_prox_start[0] + frameFraction * (pinkie_prox_end[0] - pinkie_prox_start[0])]
+        self.pinkie_prox_vel = [(pinkie_prox_end[0] - pinkie_prox_start[0]) / keyFrameDuration]
 
-        i = 35
+        i += 1
         pinkie_inter_start = [frameData[i]]
         pinkie_inter_end = [frameDataNext[i]]
         self.pinkie_inter = [pinkie_inter_start[0] + frameFraction * (pinkie_inter_end[0] - pinkie_inter_start[0])]
         self.pinkie_inter_vel = [(pinkie_inter_end[0] - pinkie_inter_start[0]) / keyFrameDuration]
 
-        i = 36
+        i += 1
         pinkie_dist_start = [frameData[i]]
         pinkie_dist_end = [frameDataNext[i]]
         self.pinkie_dist = [pinkie_dist_start[0] + frameFraction * (pinkie_dist_end[0] - pinkie_dist_start[0])]
@@ -239,17 +250,18 @@ class HandPoseInterpolator(object):
         self.Reset()  #?? needed?
         index = 0
         angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
-        self.thumb_prox = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        index += 1
+        self.thumb_prox = [angle]
         angle = action[index]
         index += 1
         self.thumb_inter = [angle]
+        angle = action[index]
+        index += 1
+        self.thumb_dist = [angle]
 
         angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
-        self.index_prox = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        index += 1
+        self.index_prox = [angle]
         angle = action[index]
         index += 1
         self.index_inter = [angle]
@@ -258,9 +270,8 @@ class HandPoseInterpolator(object):
         self.index_dist = [angle]
 
         angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
-        self.middle_prox = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        index += 1
+        self.middle_prox = [angle]
         angle = action[index]
         index += 1
         self.middle_inter = [angle]
@@ -269,9 +280,8 @@ class HandPoseInterpolator(object):
         self.middle_dist = [angle]
 
         angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
-        self.ring_prox = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        index += 1
+        self.ring_prox = [angle]
         angle = action[index]
         index += 1
         self.ring_inter = [angle]
@@ -280,9 +290,8 @@ class HandPoseInterpolator(object):
         self.ring_dist = [angle]
 
         angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
-        self.pinkie_prox = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        index += 1
+        self.pinkie_prox = [angle]
         angle = action[index]
         index += 1
         self.pinkie_inter = [angle]

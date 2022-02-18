@@ -6,7 +6,7 @@ from stable_baselines3.common.cmd_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 
 log_dir = "gym_env/output/"
-env_name = 'HumanoidDeepMimicUpperSignerBulletEnv-v1'
+env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
