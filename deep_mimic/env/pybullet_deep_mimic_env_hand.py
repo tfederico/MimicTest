@@ -322,5 +322,3 @@ if __name__ == '__main__':
 
     _internal_env._pybullet_client.disconnect()
 
-
-
