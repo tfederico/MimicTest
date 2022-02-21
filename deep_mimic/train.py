@@ -10,7 +10,7 @@ from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback,
 import deep_mimic
 
 # Create log dir
-log_dir = "gym_env/output/"
+log_dir = "output/"
 os.makedirs(log_dir, exist_ok=True)
 
 policy_kwargs = dict(

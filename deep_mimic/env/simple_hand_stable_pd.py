@@ -670,5 +670,4 @@ if __name__ == '__main__':
         _ = _humanoid.computePose(_humanoid._frameFraction)
         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=False)
         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._sim_model, initBase=False)
-        print(_humanoid._poseInterpolator.GetPose())
         time.sleep(0.1)

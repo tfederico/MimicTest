@@ -1,7 +1,7 @@
 .idea
+output
 deep_mimic/__pycache__/
 deep_mimic/env/__pycache__/
 *__pycache__*
-gym_env
 deep_mimic/gym_env/output
 DeepMimic_for_ASL.egg-info
