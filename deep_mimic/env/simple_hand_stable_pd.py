@@ -88,9 +88,9 @@ class HandStablePD(object):
         self._timeStep = timeStep
         self._kpOrg = [
             0, 0, 0,
-            0, 0, 0, 0] + [500] * 15
+            0, 0, 0, 0] + [0] * 15
 
-        self._kdOrg = [k/10 for k in self._kpOrg]
+        self._kdOrg = [0 for k in self._kpOrg]
 
         self._jointIndicesAll = [
             thumb_prox, thumb_inter, thumb_dist,
