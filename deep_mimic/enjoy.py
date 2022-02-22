@@ -5,7 +5,7 @@ import deep_mimic
 from stable_baselines3.common.cmd_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 
-log_dir = "gym_env/output/"
+log_dir = "output/"
 env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)

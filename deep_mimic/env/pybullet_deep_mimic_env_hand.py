@@ -51,7 +51,7 @@ class PyBulletDeepMimicEnv(Env):
                                                            useMaximalCoordinates=True)
 
             self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_Y_AXIS_UP, 1)
-            self._pybullet_client.setGravity(0, -9.8, 0)
+            self._pybullet_client.setGravity(0, 0, 0)
 
             self._pybullet_client.setPhysicsEngineParameter(numSolverIterations=10)
             self._pybullet_client.changeDynamics(self._planeId, linkIndex=-1, lateralFriction=0.9)
@@ -187,12 +187,6 @@ class PyBulletDeepMimicEnv(Env):
     def set_mode(self, mode):
         self._mode = mode
 
-    def need_new_action(self, agent_id):
-        if self.t >= self.needs_update_time:
-            self.needs_update_time = self.t + 1. / 30.
-            return True
-        return False
-
     def record_state(self, agent_id):
         state = self._humanoid.getState()
 
@@ -237,23 +231,8 @@ class PyBulletDeepMimicEnv(Env):
 
             maxForces = [
                 0, 0, 0,
-                0, 0, 0, 0,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500,
-                500
-            ]
+                0, 0, 0, 0
+            ] + [0.0001] * 15
 
 
             self._humanoid.computeAndApplyPDForces(self.desiredPose,
@@ -301,7 +280,7 @@ if __name__ == '__main__':
         succ = _arg_parser.load_file(path)
     assert succ, 'Failed to load args'
     _internal_env = PyBulletDeepMimicEnv(_arg_parser, True,
-                                              time_step=0,
+                                              time_step=1/30,
                                               init_strategy=InitializationStrategy.START,
                                               use_com_reward=False)
 
@@ -316,7 +295,9 @@ if __name__ == '__main__':
     print(desired)
 
     for i in range(10000):
-        # print(_internal_env._humanoid._poseInterpolator.GetPose())
+        action = _internal_env._humanoid._poseInterpolator.GetPose()
+        action = action[7:]
+        _internal_env.set_action(0, action)
         _internal_env.update(1/30)
         time.sleep(1/30)
 

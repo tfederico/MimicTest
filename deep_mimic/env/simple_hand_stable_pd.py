@@ -84,13 +84,13 @@ class HandStablePD(object):
 
         self._poseInterpolator = hand_pose_interpolator.HandPoseInterpolator()
 
-        self._stablePD = pd_controller_stable.PDControllerStable(self._pybullet_client) #pd_controller_stable.PDControllerStableMultiDof(self._pybullet_client)
+        self._stablePD = pd_controller_stable.PDControllerStableMultiDof(self._pybullet_client)
         self._timeStep = timeStep
         self._kpOrg = [
             0, 0, 0,
-            0, 0, 0, 0] + [0] * 15
+            0, 0, 0, 0] + [500] * 15
 
-        self._kdOrg = [0 for k in self._kpOrg]
+        self._kdOrg = [k/10 for k in self._kpOrg]
 
         self._jointIndicesAll = [
             thumb_prox, thumb_inter, thumb_dist,
@@ -226,8 +226,8 @@ class HandStablePD(object):
     def computePose(self, frameFraction):
         frameData = self._mocap_data._motion_data['Frames'][self._frame]
         frameDataNext = self._mocap_data._motion_data['Frames'][self._frameNext]
-        self._poseInterpolator.Slerp(frameFraction, frameData, frameDataNext, self._pybullet_client)
-        self.computeCycleOffset()
+        pose = self._poseInterpolator.Slerp(frameFraction, frameData, frameDataNext, self._pybullet_client)
+        cycleOffset = self.computeCycleOffset()
         oldPos = self._poseInterpolator.base_pos
         self._poseInterpolator.base_pos = [
             oldPos[0] + self._cycleCount * self._cycleOffset[0],
@@ -286,8 +286,7 @@ class HandStablePD(object):
                                                                 targetVelocities=targetVelocities,
                                                                 forces=forces,
                                                                 positionGains=kps,
-                                                                velocityGains=kds,
-                                                                )
+                                                                velocityGains=kds)
 
     def getPhase(self):
         keyFrameDuration = self._mocap_data.KeyFrameDuraction()
@@ -624,7 +623,7 @@ if __name__ == '__main__':
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1./240
+    timeStep = 1./30
     _init_strategy = InitializationStrategy.START
     _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
@@ -665,9 +664,23 @@ if __name__ == '__main__':
 
     import time
 
-    for i in range(1000):
-        _humanoid.setSimTime(i/10)
-        _ = _humanoid.computePose(_humanoid._frameFraction)
-        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=False)
-        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._sim_model, initBase=False)
-        time.sleep(0.1)
+    while True:
+        action = [1.57] * 15
+        desiredPose = _humanoid.convertActionToPose(action)
+        desiredPose[:7] = [0] * 7
+        for i in range(240//30):
+            _pybullet_client.setTimeStep(timeStep)
+            _humanoid._timeStep = timeStep
+            t += timeStep
+            _humanoid.setSimTime(t)
+            kinPose = _humanoid.computePose(_humanoid._frameFraction)
+            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+            maxForces = [
+                            0, 0, 0,
+                            0, 0, 0, 0
+                        ] + [200] * 15
+
+            _humanoid.computeAndApplyPDForces(desiredPose, maxForces=maxForces)
+
+            _pybullet_client.stepSimulation()
+            time.sleep(0.3)
