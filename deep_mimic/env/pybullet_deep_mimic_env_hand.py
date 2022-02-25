@@ -153,8 +153,8 @@ class PyBulletDeepMimicEnv(Env):
     def build_action_offset(self, agent_id):
         out_offset = [0] * self.get_action_size(agent_id)
         out_offset = [
-            0.0
-        ] * self.get_state_size(-1)
+            -0.5 * (up + low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
+        ]
         #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
         #see cCtCtrlUtil::BuildOffsetScalePDSpherical
         return np.array(out_offset)
@@ -164,15 +164,15 @@ class PyBulletDeepMimicEnv(Env):
         #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
         #see cCtCtrlUtil::BuildOffsetScalePDSpherical
         out_scale = [
-            0.08
-        ] * self.get_state_size(-1)
+            0.5/(up - low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
+        ]
         return np.array(out_scale)
 
     def build_action_bound_min(self, agent_id):
         #see cCtCtrlUtil::BuildBoundsPDSpherical
         out_scale = [-1] * self.get_action_size(agent_id)
         out_scale = [
-            -3.14
+            0
         ] * self.get_state_size(-1)
 
         return out_scale
@@ -232,7 +232,7 @@ class PyBulletDeepMimicEnv(Env):
             maxForces = [
                 0, 0, 0,
                 0, 0, 0, 0
-            ] + [0.0001] * 15
+            ] + [100] * 15
 
 
             self._humanoid.computeAndApplyPDForces(self.desiredPose,
@@ -269,37 +269,37 @@ class PyBulletDeepMimicEnv(Env):
         return False
 
 
-if __name__ == '__main__':
-
-    from pybullet_utils.arg_parser import ArgParser
-    arg_file = "run_humanoid3d_signer_args.txt"
-    _arg_parser = ArgParser()
-    succ = False
-    if (arg_file != ''):
-        path = pybullet_data.getDataPath() + "/args/" + arg_file
-        succ = _arg_parser.load_file(path)
-    assert succ, 'Failed to load args'
-    _internal_env = PyBulletDeepMimicEnv(_arg_parser, True,
-                                              time_step=1/30,
-                                              init_strategy=InitializationStrategy.START,
-                                              use_com_reward=False)
-
-    print("resetting")
-    _internal_env.reset()
-    action = _internal_env._humanoid._poseInterpolator.GetPose()
-    action = action[7:]
-    print(action)
-    _internal_env.set_action(0, action)
-
-    desired = _internal_env.desiredPose
-    print(desired)
-
-    for i in range(10000):
-        action = _internal_env._humanoid._poseInterpolator.GetPose()
-        action = action[7:]
-        _internal_env.set_action(0, action)
-        _internal_env.update(1/30)
-        time.sleep(1/30)
-
-    _internal_env._pybullet_client.disconnect()
+# if __name__ == '__main__':
+#
+#     from pybullet_utils.arg_parser import ArgParser
+#     arg_file = "run_humanoid3d_signer_args.txt"
+#     _arg_parser = ArgParser()
+#     succ = False
+#     if (arg_file != ''):
+#         path = pybullet_data.getDataPath() + "/args/" + arg_file
+#         succ = _arg_parser.load_file(path)
+#     assert succ, 'Failed to load args'
+#     _internal_env = PyBulletDeepMimicEnv(_arg_parser, True,
+#                                               time_step=1/30,
+#                                               init_strategy=InitializationStrategy.START,
+#                                               use_com_reward=False)
+#
+#     print("resetting")
+#     _internal_env.reset()
+#     action = _internal_env._humanoid._poseInterpolator.GetPose()
+#     action = action[7:]
+#     print(action)
+#     _internal_env.set_action(0, action)
+#
+#     desired = _internal_env.desiredPose
+#     print(desired)
+#
+#     for i in range(10000):
+#         action = _internal_env._humanoid._poseInterpolator.GetPose()
+#         action = action[7:]
+#         _internal_env.set_action(0, action)
+#         _internal_env.update(1/30)
+#         time.sleep(1/30)
+#
+#     _internal_env._pybullet_client.disconnect()
 

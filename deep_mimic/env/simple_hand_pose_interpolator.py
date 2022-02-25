@@ -110,6 +110,26 @@ class HandPoseInterpolator(object):
             orn[3] /= length
             return orn
 
+    def GetVelocities(self):
+        vel = [
+            *self.thumb_prox_vel,
+            *self.thumb_inter_vel,
+            *self.thumb_dist_vel,
+            *self.index_prox_vel,
+            *self.index_inter_vel,
+            *self.index_dist_vel,
+            *self.middle_prox_vel,
+            *self.middle_inter_vel,
+            *self.middle_dist_vel,
+            *self.ring_prox_vel,
+            *self.ring_inter_vel,
+            *self.ring_dist_vel,
+            *self.pinkie_prox_vel,
+            *self.pinkie_inter_vel,
+            *self.pinkie_dist_vel
+        ]
+        return vel
+
     def GetPose(self):
         pose = [
             *self.base_pos,

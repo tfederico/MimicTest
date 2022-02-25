@@ -88,9 +88,9 @@ class HandStablePD(object):
         self._timeStep = timeStep
         self._kpOrg = [
             0, 0, 0,
-            0, 0, 0, 0] + [500] * 15
+            0, 0, 0, 0] + [2] * 15
 
-        self._kdOrg = [k/10 for k in self._kpOrg]
+        self._kdOrg = [k/5 for k in self._kpOrg]
 
         self._jointIndicesAll = [
             thumb_prox, thumb_inter, thumb_dist,
@@ -135,7 +135,7 @@ class HandStablePD(object):
                 velocityGain=1,
                 force=[jointFrictionForce, jointFrictionForce, 0])
 
-        self._jointDofCounts = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        self._jointDofCounts = [1] * 15
 
         # only those body parts/links are allowed to touch the ground, otherwise the episode terminates
         fall_contact_bodies = []
@@ -281,7 +281,7 @@ class HandStablePD(object):
 
         self._pybullet_client.setJointMotorControlMultiDofArray(self._sim_model,
                                                                 indices,
-                                                                self._pybullet_client.STABLE_PD_CONTROL,
+                                                                self._pybullet_client.POSITION_CONTROL,
                                                                 targetPositions=targetPositions,
                                                                 targetVelocities=targetVelocities,
                                                                 forces=forces,
@@ -467,7 +467,7 @@ class HandStablePD(object):
         root_id = 0
 
         num_end_effs = 5
-        num_joints = 15
+        num_joints = 16
 
         mJointWeights = [1]*num_joints # TODO: replace values
 
@@ -610,77 +610,116 @@ class HandStablePD(object):
         return com_pos, com_vel
 
 
-if __name__ == '__main__':
-    import pybullet as p1
-    from pybullet_utils import bullet_client
-    import data as pybullet_data
-    from pybullet_utils.arg_parser import ArgParser
-    from deep_mimic.env.pybullet_deep_mimic_env_hand import InitializationStrategy
-    from deep_mimic.env import motion_capture_data
-    import time
-
-    arg_file = "run_humanoid3d_signer_args.txt"
-    arg_parser = ArgParser()
-    path = pybullet_data.getDataPath() + "/args/" + arg_file
-    succ = arg_parser.load_file(path)
-    timeStep = 1./30
-    _init_strategy = InitializationStrategy.START
-    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
-    # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
-    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
-    _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
-    z2y = _pybullet_client.getQuaternionFromEuler([-math.pi * 0.5, 0, 0])
-    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_Y_AXIS_UP, 1)
-    _pybullet_client.setGravity(0, -9.8, 0)
-    _pybullet_client.setPhysicsEngineParameter(numSolverIterations=10)
-    _mocapData = motion_capture_data.MotionCaptureData()
-    motion_file = arg_parser.parse_strings('motion_file')
-    print(motion_file)
-    print("motion_file=", motion_file[0])
-    motionPath = pybullet_data.getDataPath() + "/" + motion_file[0]
-    print(motionPath)
-    _mocapData.Load(motionPath)
-    timeStep = timeStep
-    useFixedBase = True
-    _humanoid = HandStablePD(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser)
-
-
-    _isInitialized = True
-    _pybullet_client.setTimeStep(timeStep)
-    _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
-    if _init_strategy == InitializationStrategy.RANDOM:
-        pass
-    elif _init_strategy == InitializationStrategy.START:
-        startTime = 0
-    t = startTime
-    _humanoid.setSimTime(startTime)
-    _humanoid.resetPose()
-    # this clears the contact points. Todo: add API to explicitly clear all contact points?
-
-    # _pybullet_client.stepSimulation()
-    _humanoid.resetPose()
-
-    needs_update_time = t - 1  # force update
-
-    import time
-
-    while True:
-        action = [1.57] * 15
-        desiredPose = _humanoid.convertActionToPose(action)
-        desiredPose[:7] = [0] * 7
-        for i in range(240//30):
-            _pybullet_client.setTimeStep(timeStep)
-            _humanoid._timeStep = timeStep
-            t += timeStep
-            _humanoid.setSimTime(t)
-            kinPose = _humanoid.computePose(_humanoid._frameFraction)
-            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
-            maxForces = [
-                            0, 0, 0,
-                            0, 0, 0, 0
-                        ] + [200] * 15
-
-            _humanoid.computeAndApplyPDForces(desiredPose, maxForces=maxForces)
-
-            _pybullet_client.stepSimulation()
-            time.sleep(0.3)
+# if __name__ == '__main__':
+#     import pybullet as p1
+#     from pybullet_utils import bullet_client
+#     import data as pybullet_data
+#     from pybullet_utils.arg_parser import ArgParser
+#     from deep_mimic.env.pybullet_deep_mimic_env_hand import InitializationStrategy
+#     from deep_mimic.env import motion_capture_data
+#     import time
+#
+#     arg_file = "run_humanoid3d_signer_args.txt"
+#     arg_parser = ArgParser()
+#     path = pybullet_data.getDataPath() + "/args/" + arg_file
+#     succ = arg_parser.load_file(path)
+#     timeStep = 1./240
+#     _init_strategy = InitializationStrategy.START
+#     _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
+#     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
+#     _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
+#     _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
+#     z2y = _pybullet_client.getQuaternionFromEuler([-math.pi * 0.5, 0, 0])
+#     _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_Y_AXIS_UP, 1)
+#     _pybullet_client.setGravity(0, -9.8, 0)
+#     _pybullet_client.setPhysicsEngineParameter(numSolverIterations=10)
+#     _mocapData = motion_capture_data.MotionCaptureData()
+#     motion_file = arg_parser.parse_strings('motion_file')
+#     print(motion_file)
+#     print("motion_file=", motion_file[0])
+#     motionPath = pybullet_data.getDataPath() + "/" + motion_file[0]
+#     print(motionPath)
+#     _mocapData.Load(motionPath)
+#     timeStep = timeStep
+#     useFixedBase = True
+#     _humanoid = HandStablePD(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser)
+#
+#
+#     _isInitialized = True
+#     _pybullet_client.setTimeStep(timeStep)
+#     _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
+#
+#     startTime = 0
+#
+#     t = startTime
+#     _humanoid.setSimTime(startTime)
+#     _humanoid.resetPose()
+#     # this clears the contact points. Todo: add API to explicitly clear all contact points?
+#
+#     # _pybullet_client.stepSimulation()
+#     _humanoid.resetPose()
+#
+#     needs_update_time = t - 1  # force update
+#
+#     import time
+#
+#     n_joints = _pybullet_client.getNumJoints(_humanoid._sim_model)
+#
+#     cycle = _mocapData.getCycleTime()
+#
+#     action = _mocapData._motion_data['Frames'][_humanoid._frameNext]
+#     _humanoid.convertActionToPose(action[7:])
+#
+#     kin_joint = []
+#     sim_joint = []
+#     kin_vel = []
+#     sim_vel = []
+#
+#     steps = range(10000)
+#
+#     for _ in steps:
+#
+#         _pybullet_client.setTimeStep(timeStep)
+#         _humanoid._timeStep = timeStep
+#         t += timeStep
+#         _humanoid.setSimTime(t)
+#         kinPose = _humanoid.computePose(_humanoid._frameFraction)
+#         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+#         maxForces = [0] * 7 + [100] * 15
+#
+#         _humanoid.computeAndApplyPDForces(kinPose, maxForces=maxForces)
+#         state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
+#
+#         _pybullet_client.stepSimulation()
+#         # _humanoid._sim_model
+#         state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
+#         simPose = [s[0] for s in state]
+#         simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
+#         kinVelocities = _humanoid._poseInterpolator.GetVelocities()
+#         simVelocities = [s[1] for s in state]
+#
+#         kin_joint.append(kinPose[10])
+#         sim_joint.append(simPose[10])
+#
+#         kin_vel.append(kinVelocities[3])
+#         sim_vel.append(simVelocities[3])
+#
+#         err_pose = sum([abs(k - s) for k, s in zip(kinPose, simPose)])
+#         err_vel = sum([abs(k - s) for k, s in zip(kinVelocities, simVelocities)])
+#
+#         time.sleep(1/100)
+#
+#     import matplotlib.pyplot as plt
+#
+#     fig, ax = plt.subplots(2)
+#
+#     ax[0].plot(list(steps), kin_joint, color="blue")
+#     ax[0].plot(list(steps), sim_joint, color="red")
+#
+#     # ax[0].plot(list(steps), [k - s for k, s in zip(kin_joint, sim_joint)], color="red")
+#
+#
+#     ax[1].plot(list(steps), kin_vel, color="blue")
+#     ax[1].plot(list(steps), sim_vel, color="red")
+#
+#     plt.show()
