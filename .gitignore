@@ -5,3 +5,4 @@ deep_mimic/env/__pycache__/
 *__pycache__*
 deep_mimic/gym_env/output
 DeepMimic_for_ASL.egg-info
+wandb

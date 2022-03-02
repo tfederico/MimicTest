@@ -1,0 +1,27 @@
+entity: mrroboto
+project: ppo
+program: deep_mimic.train
+command:
+  - ${env}
+  - ${interpreter}
+  - '-m'
+  - ${program}
+  - ${args}
+method: bayes
+metric:
+  name: reward/imitation_reward
+  goal: maximize
+parameters:
+  log_std_init:
+    values: [-5, -3, -1]
+  ortho_init:
+    values: [true, false]
+  learning_rate:
+    min: 1.0e-7
+    max: 1.0e-3
+  gamma:
+    min: 0.9
+    max: 0.999
+  weight_decay:
+    min: 1.0e-6
+    max: 1.0e-4

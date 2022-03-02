@@ -18,7 +18,7 @@ from deep_mimic.env.pybullet_deep_mimic_env_hand import PyBulletDeepMimicEnv, In
 from pybullet_utils.arg_parser import ArgParser
 from pybullet_utils.logger import Logger
 from scipy.stats import truncnorm
-
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +204,14 @@ class HandDeepBulletEnv(gym.Env):
             'reward': self._internal_env._humanoid._info_rew,
             'error': self._internal_env._humanoid._info_err
         }
+
+        wandb_log = {}
+
+        for k, v in info.items():
+            for kk, vv in v.items():
+                wandb_log[f"{k}/{kk}"] = vv
+
+        wandb.log(wandb_log)
 
         return state, reward, done, info
 
