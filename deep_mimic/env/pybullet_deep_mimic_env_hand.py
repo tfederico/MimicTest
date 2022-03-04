@@ -173,7 +173,7 @@ class PyBulletDeepMimicEnv(Env):
         out_scale = [-1] * self.get_action_size(agent_id)
         out_scale = [
             0
-        ] * self.get_state_size(-1)
+        ] * self.get_action_size(-1)
 
         return out_scale
 
@@ -181,7 +181,7 @@ class PyBulletDeepMimicEnv(Env):
         out_scale = [1] * self.get_action_size(agent_id)
         out_scale = [
             1.57
-        ] * self.get_state_size(-1)
+        ] * self.get_action_size(-1)
         return out_scale
 
     def set_mode(self, mode):
@@ -232,7 +232,7 @@ class PyBulletDeepMimicEnv(Env):
             maxForces = [
                 0, 0, 0,
                 0, 0, 0, 0
-            ] + [500] * 15
+            ] + [100] * 15
 
 
             self._humanoid.computeAndApplyPDForces(self.desiredPose,

@@ -636,7 +636,7 @@ def tune_controller(args):
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1. / 30
+    timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
     _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
@@ -687,8 +687,8 @@ def tune_controller(args):
     sim_joint = []
     kin_vel = []
     sim_vel = []
-
-    steps = range(1200)
+    rewards = []
+    steps = range(2400)
 
     for _ in steps:
         _pybullet_client.setTimeStep(timeStep)
@@ -696,11 +696,12 @@ def tune_controller(args):
         t += timeStep
         _humanoid.setSimTime(t)
         kinPose = _humanoid.computePose(_humanoid._frameFraction)
+        _humanoid.getReward(kinPose)
+        rewards.append(_humanoid._info_rew)
         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
         maxForces = [0] * 7 + [500] * 15
 
         _humanoid.computeAndApplyPDForces(kinPose, maxForces=maxForces)
-        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
 
         _pybullet_client.stepSimulation()
         # _humanoid._sim_model
@@ -718,23 +719,38 @@ def tune_controller(args):
 
         time.sleep(1/100)
 
-    # import matplotlib.pyplot as plt
-    #
-    # fig, ax = plt.subplots(4)
-    #
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(7)
+
     # ax[0].plot(list(steps), kin_joint, color="blue")
     # ax[1].plot(list(steps), sim_joint, color="red")
     pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # ax[0].plot(list(steps), pos_err, color="green")
+    ax[0].plot(list(steps), pos_err, color="green")
 
     abs_pos_err = [abs(p) for p in pos_err]
     # ax[2].plot(list(steps), kin_vel, color="blue")
     # ax[3].plot(list(steps), sim_vel, color="red")
     vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # ax[1].plot(list(steps), vel_err, color="green")
+    ax[1].plot(list(steps), vel_err, color="green")
+
+    # ax[2].plot(list(steps), rewards)
+
+    ax[2].plot(list(steps), [r['pose_reward'] for r in rewards])
+    ax[2].set_ylabel("pose")
+    ax[3].plot(list(steps), [r['vel_reward'] for r in rewards])
+    ax[3].set_ylabel("vel")
+    ax[4].plot(list(steps), [r['end_eff_reward'] for r in rewards])
+    ax[4].set_ylabel("end_eff")
+    ax[5].plot(list(steps), [r['root_reward'] for r in rewards])
+    ax[5].set_ylabel("root")
+    ax[6].plot(list(steps), [r['imitation_reward'] for r in rewards])
+    ax[6].set_ylabel("imit")
+
+
 
     abs_vel_err = [abs(v) for v in vel_err]
-    # plt.show()
+    plt.show()
 
     log = {
         "pose": sum(abs_pos_err),

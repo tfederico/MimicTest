@@ -94,31 +94,14 @@ class HandDeepBulletEnv(gym.Env):
             self._policy_step = 1./240
         self._num_env_steps = int(self._policy_step / self._time_step)
 
-        self.theta_threshold_radians = 12 * 2 * math.pi / 360
-        self.x_threshold = 0.4  #2.4
-        high = np.array([
-            self.x_threshold * 2,
-            np.finfo(np.float32).max, self.theta_threshold_radians * 2,
-            np.finfo(np.float32).max
-        ])
-
-
-        ctrl_size = 22  #numDof
-        root_size = 7 # root
-
-        action_dim = ctrl_size - root_size
-
-        #print("len(action_bound_min)=",len(action_bound_min))
         action_bound_min = np.array(self._internal_env.build_action_bound_min(-1))
-        #print("len(action_bound_max)=",len(action_bound_max))
         action_bound_max = np.array(self._internal_env.build_action_bound_max(-1))
 
         if self._rescale_actions:
             action_bound_min = self.scale_action(action_bound_min)
             action_bound_max = self.scale_action(action_bound_max)
 
-        self.action_space = CheatingBox(action_bound_min, action_bound_max)#spaces.Box(action_bound_min, action_bound_max)
-
+        self.action_space = CheatingBox(action_bound_min, action_bound_max)
 
         observation_min = np.array([0.0]+[-100.0]+[-4.0]*112+[-500.0]*96)
         observation_max = np.array([1.0]+[100.0]+[4.0]*112+[500.0]*96)
