@@ -93,7 +93,7 @@ class HandStablePD(object):
         if kp:
             self._kpOrg = [0] * 7 + [kp] * 15
         else:
-            self._kpOrg = [0] * 7 + [0.01] * 15
+            self._kpOrg = [0] * 7 + [0.05] * 15
 
         if kd:
             self._kdOrg = [0] * 7 + [kd] * 15
@@ -726,7 +726,7 @@ def tune_controller(args):
         # kin_vel.append(kinVelocities[1])
         # sim_vel.append(simVelocities[1])
     #
-    #     time.sleep(1/100)
+    #     time.sleep(1/30)
     #
     # import matplotlib.pyplot as plt
     #
@@ -734,17 +734,17 @@ def tune_controller(args):
     #
     # ax[0].plot(list(range(len(steps)*8)), kin_joint, color="blue")
     # ax[1].plot(list(range(len(steps)*8)), sim_joint, color="red")
-    # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # ax[0].plot(list(steps), pos_err, color="green")
-
-    # abs_pos_err = [p*p for p in pos_err]
-    # ax[1].plot(list(steps), kin_vel, color="blue")
-    # ax[1].plot(list(steps), sim_vel, color="red")
-    # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # ax[1].plot(list(steps), vel_err, color="green")
-
-    # ax[2].plot(list(range(len(steps)*8)), rewards)
-
+    # # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
+    # # ax[0].plot(list(steps), pos_err, color="green")
+    #
+    # # abs_pos_err = [p*p for p in pos_err]
+    # # ax[1].plot(list(steps), kin_vel, color="blue")
+    # # ax[1].plot(list(steps), sim_vel, color="red")
+    # # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
+    # # ax[1].plot(list(steps), vel_err, color="green")
+    #
+    # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    #
     # ax[2].plot(list(range(len(steps)*8)), [r['pose_err'] for r in rewards])
     # ax[2].set_ylabel("pose")
     # ax[3].plot(list(range(len(steps)*8)), [r['vel_err'] for r in rewards])

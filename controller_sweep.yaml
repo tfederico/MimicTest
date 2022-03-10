@@ -14,7 +14,7 @@ metric:
 parameters:
   kp:
     min: 0.0
-    max: 1000.0
+    max: 0.1
   kd:
-    min: 0.0
-    max: 10.0
+    min: 1.0
+    max: 2.0

@@ -6,7 +6,7 @@ import pybullet_envs
 import torch.nn as nn
 import time
 
-env_name = 'HumanoidDeepMimicWalkerBulletEnv-v1'
+env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)
 env = VecNormalize.load("output/vecnormalize.pkl", env)
