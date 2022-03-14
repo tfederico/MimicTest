@@ -10,7 +10,8 @@ from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback,
 import deep_mimic
 import wandb
 import argparse
-
+from wandb.integration.sb3 import WandbCallback
+from datetime import datetime
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -25,11 +26,18 @@ def str2bool(v):
 
 def main(args):
 
-    wandb.init(config=args)
+    run = wandb.init(
+        project="test",
+        config=args,
+        sync_tensorboard=True,
+        monitor_gym=True,
+        save_code=True,
+    )
     args = wandb.config
 
     # Create log dir
-    log_dir = "output/"
+    time = datetime.now()
+    log_dir = "output/"+str(time)
     os.makedirs(log_dir, exist_ok=True)
 
     policy_kwargs = dict(
@@ -62,6 +70,7 @@ def main(args):
 
     checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path=log_dir)
     tensorboard_callback = TensorboardCallback(verbose=0)
+    wandb_callback = WandbCallback(gradient_save_freq=100, model_save_path=f"{log_dir}/model", verbose=2)
     # Separate evaluation env
     eval_env = make_vec_env(env_name)
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
@@ -69,7 +78,7 @@ def main(args):
                                  log_path=log_dir, n_eval_episodes=10,
                                  eval_freq=10000, deterministic=True)
     # Create the callback list
-    callback = CallbackList([checkpoint_callback, tensorboard_callback, eval_callback])
+    callback = CallbackList([checkpoint_callback, tensorboard_callback, eval_callback, wandb_callback])
 
     n_envs = 8
     env = DummyVecEnv([lambda: Monitor(gym.make(env_name), log_dir) for _ in range(n_envs)])
@@ -93,12 +102,13 @@ def main(args):
         policy_kwargs=model_args['policy_kwargs'],
         seed=model_args['seed']
     )
-    env.save(log_dir+"vecnormalize.pkl")
+    env.save(log_dir+"/vecnormalize.pkl")
     n_steps = int(60e6)
     with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
         model.learn(n_steps, callback=[prog_callback, callback])
 
-    env.save(log_dir+"vecnormalize.pkl")
+    env.save(log_dir+"/vecnormalize.pkl")
+    run.finish()
 
 if __name__ == '__main__':
 
