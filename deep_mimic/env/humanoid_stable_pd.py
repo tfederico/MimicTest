@@ -28,7 +28,7 @@ class HumanoidStablePD(object):
         print("LOADING humanoid!")
         flags = self._pybullet_client.URDF_MAINTAIN_LINK_ORDER + self._pybullet_client.URDF_USE_SELF_COLLISION + self._pybullet_client.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
         self._sim_model = self._pybullet_client.loadURDF(
-            "humanoid/humanoid.urdf", [0, 0.889540259, 0],
+            "humanoid/old_humanoid.urdf", [0, 0.889540259, 0],
             globalScaling=0.25,
             useFixedBase=useFixedBase,
             flags=flags)
@@ -40,7 +40,7 @@ class HumanoidStablePD(object):
         self._end_effectors = [5, 8, 11, 14]  # ankle and wrist, both left and right
 
         self._kin_model = self._pybullet_client.loadURDF(
-            "humanoid/humanoid.urdf", [0, 0.85, 0],
+            "humanoid/old_humanoid.urdf", [0, 0.85, 0],
             globalScaling=0.25,
             useFixedBase=True,
             flags=self._pybullet_client.URDF_MAINTAIN_LINK_ORDER)
