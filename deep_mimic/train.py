@@ -30,8 +30,7 @@ def main(args):
         project="test",
         config=args,
         sync_tensorboard=True,
-        monitor_gym=True,
-        save_code=True,
+        monitor_gym=True
     )
     args = wandb.config
 
@@ -68,15 +67,15 @@ def main(args):
 
     env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
-    checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path=log_dir)
+    checkpoint_callback = CheckpointCallback(save_freq=10000, save_path=log_dir)
     tensorboard_callback = TensorboardCallback(verbose=0)
-    wandb_callback = WandbCallback(gradient_save_freq=100, model_save_path=f"{log_dir}/model", verbose=2)
+    wandb_callback = WandbCallback()
     # Separate evaluation env
     eval_env = make_vec_env(env_name)
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir,
                                  log_path=log_dir, n_eval_episodes=10,
-                                 eval_freq=10000, deterministic=True)
+                                 eval_freq=1000, deterministic=True)
     # Create the callback list
     callback = CallbackList([checkpoint_callback, tensorboard_callback, eval_callback, wandb_callback])
 
@@ -103,7 +102,7 @@ def main(args):
         seed=model_args['seed']
     )
     env.save(log_dir+"/vecnormalize.pkl")
-    n_steps = int(60e6)
+    n_steps = int(50e4)
     with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
         model.learn(n_steps, callback=[prog_callback, callback])
 

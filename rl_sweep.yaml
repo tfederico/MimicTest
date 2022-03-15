@@ -9,11 +9,11 @@ command:
   - ${args}
 method: bayes
 metric:
-  name: reward/imitation_reward
+  name: eval/mean_reward
   goal: maximize
 parameters:
   log_std_init:
-    values: [-5, -3, -1]
+    values: [-7, -5, -3, -1, 1]
   ortho_init:
     values: [true, false]
   learning_rate:
