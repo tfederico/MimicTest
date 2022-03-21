@@ -10,7 +10,7 @@
 --enable_char_soft_contact false
 
 --char_ctrls ct_pd
---motion_file data/motions/frank_test.txt
+--motion_file data/motions/frank_test_short.txt
 --sync_char_root_pos true
 --sync_char_root_rot false
 

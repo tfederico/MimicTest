@@ -690,7 +690,8 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(350)
+    steps = range(700*8)
+    print(len(_mocapData._motion_data['Frames']))
 
     for i in steps:
         # print(_humanoid._frameNext)
@@ -698,42 +699,42 @@ def tune_controller(args):
         desired_pose = _humanoid.convertActionToPose(action[7:])
         desired_pose[:7] = [0] * 7
 
-        for _ in range(8):
-            _pybullet_client.setTimeStep(timeStep)
-            _humanoid._timeStep = timeStep
-            t += timeStep
-            _humanoid.setSimTime(t)
-            kinPose = _humanoid.computePose(_humanoid._frameFraction)
+        # for _ in range(8):
+        _pybullet_client.setTimeStep(timeStep)
+        _humanoid._timeStep = timeStep
+        t += timeStep
+        _humanoid.setSimTime(t)
+        kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-            _humanoid.getReward(kinPose)
-            rewards.append(_humanoid._info_err)
-            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
-            maxForces = [0] * 7 + [10] * 15
+        _humanoid.getReward(kinPose)
+        rewards.append(_humanoid._info_err)
+        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+        maxForces = [0] * 7 + [10] * 15
 
-            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+        _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
-            _pybullet_client.stepSimulation()
+        _pybullet_client.stepSimulation()
 
-            state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
-            simPose = [s[0] for s in state]
-            simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
-            kinVelocities = _humanoid._poseInterpolator.GetVelocities()
-            simVelocities = [s[1] for s in state]
+        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
+        simPose = [s[0] for s in state]
+        simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
+        kinVelocities = _humanoid._poseInterpolator.GetVelocities()
+        simVelocities = [s[1] for s in state]
 
-            kin_joint.append(kinPose[10])
-            sim_joint.append(simPose[10])
+        kin_joint.append(kinPose[10])
+        sim_joint.append(simPose[10])
         #
         # kin_vel.append(kinVelocities[1])
         # sim_vel.append(simVelocities[1])
     #
-    #     time.sleep(1/30)
+        # time.sleep(1/30)
     #
     # import matplotlib.pyplot as plt
     #
     # fig, ax = plt.subplots(6)
     #
-    # ax[0].plot(list(range(len(steps)*8)), kin_joint, color="blue")
-    # ax[1].plot(list(range(len(steps)*8)), sim_joint, color="red")
+    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue")
+    # ax[1].plot(list(range(len(steps))), sim_joint, color="red")
     # # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
     # # ax[0].plot(list(steps), pos_err, color="green")
     #
@@ -745,13 +746,13 @@ def tune_controller(args):
     #
     # # ax[2].plot(list(range(len(steps)*8)), rewards)
     #
-    # ax[2].plot(list(range(len(steps)*8)), [r['pose_err'] for r in rewards])
+    # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
     # ax[2].set_ylabel("pose")
-    # ax[3].plot(list(range(len(steps)*8)), [r['vel_err'] for r in rewards])
+    # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
     # ax[3].set_ylabel("vel")
-    # ax[4].plot(list(range(len(steps)*8)), [r['end_eff_err'] for r in rewards])
+    # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
     # ax[4].set_ylabel("end_eff")
-    # ax[5].plot(list(range(len(steps)*8)), [r['root_err'] for r in rewards])
+    # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
     # ax[5].set_ylabel("root")
     #
     # plt.show()

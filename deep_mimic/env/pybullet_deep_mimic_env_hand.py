@@ -267,3 +267,50 @@ class PyBulletDeepMimicEnv(Env):
         if o in keys:
             return keys[ord(key)] & self._pybullet_client.KEY_WAS_TRIGGERED
         return False
+
+
+def test_pybullet(args):
+    from pybullet_utils.arg_parser import ArgParser
+    import time
+
+    arg_file = "run_humanoid3d_signer_args.txt"
+    arg_parser = ArgParser()
+    path = pybullet_data.getDataPath() + "/args/" + arg_file
+    succ = arg_parser.load_file(path)
+    timeStep = 1. / 240
+    _init_strategy = InitializationStrategy.START
+
+    env = PyBulletDeepMimicEnv(arg_parser=arg_parser, enable_draw=True, pybullet_client=None,
+                               time_step=timeStep,
+                               init_strategy=_init_strategy,
+                               use_com_reward=False)
+
+
+    steps = range(700)
+
+    actions = []
+    for i in steps:
+        # print(_humanoid._frameNext)
+        action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][1:]
+        actions.append(action[7:])
+        env.set_action(0, action[7:])
+
+        # for _ in range(8):
+        env.update(timeStep)
+        time.sleep(1/30)
+
+    actions = np.array(actions)
+
+    for i in range(15):
+        print(min(actions[:, i]), max(actions[:, i]))
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--kp', type=float)
+    parser.add_argument('--kd', type=float)
+
+    args = parser.parse_args()
+    test_pybullet(args)

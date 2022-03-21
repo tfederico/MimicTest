@@ -87,7 +87,7 @@ class HandDeepBulletEnv(gym.Env):
         self.reset()
 
         # Query the policy at 30Hz
-        self.policy_query_30 = True
+        self.policy_query_30 = False
         if self.policy_query_30:
             self._policy_step = 1./30
         else:
