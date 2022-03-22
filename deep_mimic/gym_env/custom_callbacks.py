@@ -95,9 +95,9 @@ class TensorboardCallback(BaseCallback):
         #       root_err=root_err,
         #     )
 
-        rews = [env.env.env._internal_env._humanoid._info_rew for env in self.training_env.venv.envs]
+        rews = [env._humanoid._info_rew for env in self.training_env.venv.get_attr("internal_env")]#[env.env.env.internal_env._humanoid._info_rew for env in self.training_env.venv.envs]
         n_envs = len(rews)
-        errs = [env.env.env._internal_env._humanoid._info_err for env in self.training_env.venv.envs]
+        errs = [env._humanoid._info_err for env in self.training_env.venv.get_attr("internal_env")]
         rews = self._dsum(*rews)
         errs = self._dsum(*errs)
 

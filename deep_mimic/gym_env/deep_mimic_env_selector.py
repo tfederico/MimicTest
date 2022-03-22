@@ -159,14 +159,14 @@ class HumanoidDeepBulletSelectorEnv(HumanoidDeepBulletEnv):
 
         # get the reward info
         info = {
-        #    'reward': self._internal_env._humanoid._info_rew,
-        #    'error': self._internal_env._humanoid._info_err
+        #    'reward': self.internal_env._humanoid._info_rew,
+        #    'error': self.internal_env._humanoid._info_err
         }
 
         if self.n_clips > 1 and self._numSteps % self.switch_steps == 0:
             prev = self._internal_env.get_current_clip_num()
             self._internal_env.change_current_clip()
-            #print("Changed from {} to {}".format(prev, self._internal_env.get_current_clip_num()))
+            #print("Changed from {} to {}".format(prev, self.internal_env.get_current_clip_num()))
 
         return state, reward, done, info
 
@@ -181,9 +181,9 @@ class HumanoidDeepBulletSelectorEnv(HumanoidDeepBulletEnv):
                                                       time_step=self._time_step,
                                                       init_strategy=init_strat,
                                                       use_com_reward=self._use_com_reward)
-        #self._internal_env.change_current_clip()
+        #self.internal_env.change_current_clip()
         self._internal_env.reset()
-        #print("B", self._internal_env.get_current_clip_num())
+        #print("B", self.internal_env.get_current_clip_num())
         self._p = self._internal_env._pybullet_client
         agent_id = self.agent_id  # unused here
         self._state_offset = self._internal_env.build_state_offset(self.agent_id)

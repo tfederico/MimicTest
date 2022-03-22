@@ -36,7 +36,7 @@ class HandDeepBulletEnv(gym.Env):
 
 
 
-    def __init__(self, group, renders=False, arg_file='', test_mode=False,
+    def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -62,7 +62,7 @@ class HandDeepBulletEnv(gym.Env):
 
         self._p = None
         self._time_step = time_step
-        self._internal_env = None
+        self.internal_env = None
         self._renders = renders
         self._discrete_actions = False
         self._arg_file = arg_file
@@ -95,8 +95,8 @@ class HandDeepBulletEnv(gym.Env):
             self._policy_step = 1./240
         self._num_env_steps = int(self._policy_step / self._time_step)
 
-        action_bound_min = np.array(self._internal_env.build_action_bound_min(-1))
-        action_bound_max = np.array(self._internal_env.build_action_bound_max(-1))
+        action_bound_min = np.array(self.internal_env.build_action_bound_min(-1))
+        action_bound_max = np.array(self.internal_env.build_action_bound_max(-1))
 
         if self._rescale_actions:
             action_bound_min = self.scale_action(action_bound_min)
@@ -111,7 +111,7 @@ class HandDeepBulletEnv(gym.Env):
             observation_min = self.scale_observation(observation_min)
             observation_max = self.scale_observation(observation_max)
 
-        state_size = self._internal_env.get_state_size(-1)
+        state_size = self.internal_env.get_state_size(-1)
         self.observation_space = spaces.Box(observation_min, observation_max, dtype=np.float32)
 
         self.seed()
@@ -154,74 +154,65 @@ class HandDeepBulletEnv(gym.Env):
             action = self.unscale_action(action)
 
         # Record reward
-        reward = self._internal_env.calc_reward(agent_id)
+        reward = self.internal_env.calc_reward(agent_id)
         assert reward <= 1, "Reward is supposed to be <= 1. Actual reward: {}".format(reward)
         assert reward >= 0, "Reward is supposed to be >= 0. Actual reward: {}".format(reward)
 
         # Apply control action
-        self._internal_env.set_action(agent_id, action)
+        self.internal_env.set_action(agent_id, action)
 
-        start_time = self._internal_env.t
+        start_time = self.internal_env.t
 
         # step sim
         for i in range(self._num_env_steps):
-            self._internal_env.update(self._time_step)
+            self.internal_env.update(self._time_step)
 
-        elapsed_time = self._internal_env.t - start_time
+        elapsed_time = self.internal_env.t - start_time
 
         self._numSteps += 1
 
         # Record state
-        self.state = self._internal_env.record_state(agent_id)
+        self.state = self.internal_env.record_state(agent_id)
         state = self.state
 
         if self._rescale_observations:
             state = self.scale_observation(state)
 
         # Record done
-        done = self._internal_env.is_episode_end()
+        done = self.internal_env.is_episode_end()
 
         self.camera_update()
 
         # get the reward info
         info = {
-            'reward': self._internal_env._humanoid._info_rew,
-            'error': self._internal_env._humanoid._info_err
+            'reward': self.internal_env._humanoid._info_rew,
+            'error': self.internal_env._humanoid._info_err
         }
-
-        if self._numSteps % self._log_freq == 0:
-            wandb_log = {}
-
-            for k, v in info.items():
-                for kk, vv in v.items():
-                    wandb_log[f"{k}/{kk}"] = vv
-
-            wandb.log(wandb_log)
 
         return state, reward, done, info
 
     def reset(self):
         # use the initialization strategy
-        if self._internal_env is None:
+        if self.internal_env is None:
             if self.test_mode:
                 init_strat = InitializationStrategy.START
             else:
                 init_strat = InitializationStrategy.RANDOM
-            self._internal_env = PyBulletDeepMimicEnv(self._arg_parser, self._renders,
-                                                      time_step=self._time_step,
-                                                      init_strategy=init_strat,
-                                                      use_com_reward=self._use_com_reward)
+            self.internal_env = PyBulletDeepMimicEnv(self._arg_parser, self._renders,
+                                                     time_step=self._time_step,
+                                                     init_strategy=init_strat,
+                                                     use_com_reward=self._use_com_reward)
 
-        self._internal_env.reset()
-        self._p = self._internal_env._pybullet_client
+        self.internal_env.reset()
+        self._p = self.internal_env._pybullet_client
         agent_id = self.agent_id  # unused here
-        self._state_offset = self._internal_env.build_state_offset(self.agent_id)
-        self._state_scale = self._internal_env.build_state_scale(self.agent_id)
-        self._action_offset = self._internal_env.build_action_offset(self.agent_id)
-        self._action_scale = self._internal_env.build_action_scale(self.agent_id)
+        self._state_offset = self.internal_env.build_state_offset(self.agent_id)
+        self._state_scale = self.internal_env.build_state_scale(self.agent_id)
+        self._action_offset = self.internal_env.build_action_offset(self.agent_id)
+        self._action_scale = self.internal_env.build_action_scale(self.agent_id)
         self._numSteps = 0
         # Record state
-        self.state = self._internal_env.record_state(agent_id)
+        self.state = self.internal_env.record_state(agent_id)
 
         self.camera_update()
 
@@ -238,7 +229,7 @@ class HandDeepBulletEnv(gym.Env):
             self._renders = True
         if mode != "rgb_array":
             return np.array([])
-        hand = self._internal_env._humanoid
+        hand = self.internal_env._humanoid
         base_pos, orn = self._p.getBasePositionAndOrientation(hand._sim_model)
         base_pos = np.asarray(base_pos)
         # track the position
@@ -280,7 +271,7 @@ class HandDeepBulletEnv(gym.Env):
     def camera_update(self):
         """Update the debug visualizer camera."""
         # update camera
-        hand = self._internal_env._humanoid
+        hand = self.internal_env._humanoid
         base_pos, base_orn = self._p.getBasePositionAndOrientation(
             hand._sim_model)
         debug_caminfo = self._p.getDebugVisualizerCamera()
@@ -295,6 +286,6 @@ class HandDeepBulletEnv(gym.Env):
 class HandDeepMimicSignerBulletEnv(HandDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, group, renders=False):
+    def __init__(self, renders=False):
         # start the bullet physics server
-        HandDeepBulletEnv.__init__(self, group, renders, arg_file="run_humanoid3d_signer_args.txt")
+        HandDeepBulletEnv.__init__(self, renders, arg_file="run_humanoid3d_signer_args.txt")
