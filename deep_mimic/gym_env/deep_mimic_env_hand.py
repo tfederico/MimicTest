@@ -36,7 +36,7 @@ class HandDeepBulletEnv(gym.Env):
 
 
 
-    def __init__(self, renders=False, arg_file='', test_mode=False,
+    def __init__(self, group, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -74,6 +74,7 @@ class HandDeepBulletEnv(gym.Env):
         self.agent_id = -1
 
         self._numSteps = None
+        self._log_freq = 100
         self.test_mode = test_mode
         if self.test_mode:
             print("Environment running in TEST mode")
@@ -188,13 +189,14 @@ class HandDeepBulletEnv(gym.Env):
             'error': self._internal_env._humanoid._info_err
         }
 
-        wandb_log = {}
+        if self._numSteps % self._log_freq == 0:
+            wandb_log = {}
 
-        for k, v in info.items():
-            for kk, vv in v.items():
-                wandb_log[f"{k}/{kk}"] = vv
+            for k, v in info.items():
+                for kk, vv in v.items():
+                    wandb_log[f"{k}/{kk}"] = vv
 
-        wandb.log(wandb_log)
+            wandb.log(wandb_log)
 
         return state, reward, done, info
 
@@ -293,6 +295,6 @@ class HandDeepBulletEnv(gym.Env):
 class HandDeepMimicSignerBulletEnv(HandDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False):
+    def __init__(self, group, renders=False):
         # start the bullet physics server
-        HandDeepBulletEnv.__init__(self, renders, arg_file="run_humanoid3d_signer_args.txt")
+        HandDeepBulletEnv.__init__(self, group, renders, arg_file="run_humanoid3d_signer_args.txt")

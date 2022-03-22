@@ -3,7 +3,7 @@ import gym
 import torch.nn as nn
 from stable_baselines3 import PPO
 from stable_baselines3.common.cmd_util import make_vec_env
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 from stable_baselines3.common.monitor import Monitor
 from deep_mimic.gym_env.custom_callbacks import ProgressBarManager, TensorboardCallback
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback
@@ -12,6 +12,9 @@ import wandb
 import argparse
 from wandb.integration.sb3 import WandbCallback
 from datetime import datetime
+import multiprocessing
+
+
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -25,17 +28,19 @@ def str2bool(v):
 
 
 def main(args):
-
+    time = datetime.now()
     run = wandb.init(
         project="test",
         config=args,
         sync_tensorboard=True,
-        monitor_gym=True
+        monitor_gym=True,
+        group=str(time),
+        job_type="eval"
     )
     args = wandb.config
 
     # Create log dir
-    time = datetime.now()
+
     log_dir = "output/"+str(time)
     os.makedirs(log_dir, exist_ok=True)
 
@@ -77,10 +82,11 @@ def main(args):
                                  log_path=log_dir, n_eval_episodes=10,
                                  eval_freq=10000, deterministic=True)
     # Create the callback list
-    callback = CallbackList([checkpoint_callback, tensorboard_callback, eval_callback, wandb_callback])
+    callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback])#, tensorboard_callback])
 
-    n_envs = 8
-    env = DummyVecEnv([lambda: Monitor(gym.make(env_name), log_dir) for _ in range(n_envs)])
+    n_envs = multiprocessing.cpu_count() * 2
+
+    env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, vec_env_kwargs=dict(start_method='fork'))#DummyVecEnv([lambda: Monitor(gym.make(env_name), log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
     model = PPO(
@@ -107,6 +113,7 @@ def main(args):
         model.learn(n_steps, callback=[prog_callback, callback])
 
     env.save(log_dir+"/vecnormalize.pkl")
+    env.close()
     run.finish()
 
 if __name__ == '__main__':

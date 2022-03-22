@@ -7,7 +7,7 @@ from stable_baselines3.common.vec_env import VecNormalize
 import numpy as np
 
 
-log_dir = "output/"
+log_dir = "output/2022-03-21 11:54:15.830073/"
 env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)
@@ -25,7 +25,7 @@ while not all(dones):
     action, _states = model.predict(obs, deterministic=True)
     actions.append(env.env_method("unscale_action", action)[0])
     obs, rewards, dones, info = env.step(action)
-    # time.sleep(1./30.)
+    time.sleep(1./240.)
     tot_rew += rewards
 
 print(tot_rew)
