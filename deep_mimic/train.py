@@ -77,8 +77,8 @@ def main(args):
     eval_env = make_vec_env(env_name)
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir,
-                                 log_path=log_dir, n_eval_episodes=10,
-                                 eval_freq=10000, deterministic=True)
+                                 log_path=log_dir, n_eval_episodes=100,
+                                 eval_freq=50000, deterministic=True)
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback, tensorboard_callback])
 
