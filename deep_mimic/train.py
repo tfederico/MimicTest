@@ -65,7 +65,7 @@ def main(args):
         target_kl=0.05,
         tensorboard_log=log_dir,
         policy_kwargs=policy_kwargs,
-        seed=8
+        seed=args.seed
     )
 
     env_name = 'HandDeepMimicSignerBulletEnv-v1'
@@ -123,6 +123,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=3.0e-6)
     parser.add_argument('--gamma', type=float, default=0.95)
     parser.add_argument('--weight_decay', type=float, default=1.0e-5)
+    parser.add_argument('--seed', type=int, default=8)
 
     args = parser.parse_args()
 

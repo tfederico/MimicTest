@@ -7,7 +7,7 @@ from stable_baselines3.common.vec_env import VecNormalize
 import numpy as np
 
 
-log_dir = "output/2022-03-21 11:54:15.830073/"
+log_dir = "output/"
 env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name)
