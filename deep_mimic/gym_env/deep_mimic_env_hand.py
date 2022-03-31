@@ -80,9 +80,9 @@ class HandDeepBulletEnv(gym.Env):
             print("Environment running in TEST mode")
 
         # cam options
-        self._cam_dist = 3
-        self._cam_pitch = 0.3
-        self._cam_yaw = 0.1
+        self._cam_dist = 0.5
+        self._cam_pitch = 0
+        self._cam_yaw = 90
         self._cam_roll = 0
 
         self.reset()
@@ -276,11 +276,11 @@ class HandDeepBulletEnv(gym.Env):
             hand._sim_model)
         debug_caminfo = self._p.getDebugVisualizerCamera()
         (yaw, pitch, cur_dist) = debug_caminfo[8:11]
-        self._cam_dist = cur_dist
+        # self._cam_dist = cur_dist
         self._p.resetDebugVisualizerCamera(
             cameraDistance=self._cam_dist,
-            cameraYaw=yaw,
-            cameraPitch=pitch,
+            cameraYaw=self._cam_yaw,
+            cameraPitch=self._cam_pitch,
             cameraTargetPosition=base_pos)
 
 class HandDeepMimicSignerBulletEnv(HandDeepBulletEnv):

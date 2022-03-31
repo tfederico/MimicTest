@@ -28,34 +28,34 @@
 	<!-- thumb -->
 	<link name="thumb_prox" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
 	<joint name="thumb_prox" type="revolute" >
 		<parent link="wrist" />
 		<child link="thumb_prox" />
-		<origin rpy = "3.14 -1.47 0" xyz = "0.25435328483581543 0.16699939966201782 0.31131690740585327" />
+		<origin rpy = "0 0 0" xyz = "0.25435328483581543 0.16699939966201782 0.31131690740585327" />
 		<axis xyz = "0.000000 1.000000 0.000000" />
     	<limit effort="1000" lower="0" upper="1.57" velocity="0.5"/>
 	</joint>
 	<link name="thumb_inter" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -63,19 +63,19 @@
 		<parent link="thumb_prox" />
 		<child link="thumb_inter" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.11243215203285217" />
+		<origin rpy = "0 0 0" xyz = "0.08786723017692566 0.01713097095489502 0.11243215203285217" />
 		<axis xyz = "0.000000 1.000000 0.000000" />
 	</joint>
 	<link name="thumb_dist" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -83,20 +83,20 @@
 		<parent link="thumb_inter" />
 		<child link="thumb_dist" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.13189956545829773" />
+		<origin rpy = "0 0 0" xyz = "0.10562241077423096 -0.005341768264770508 0.13189956545829773" />
 		<axis xyz = "0.000000 1.000000 0.000000" />
 	</joint>
 	<!-- index -->
 	<link name="index_prox" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -109,14 +109,14 @@
 	</joint>
 	<link name="index_inter" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -124,19 +124,19 @@
 		<parent link="index_prox" />
 		<child link="index_inter" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.12021106481552124" />
+		<origin rpy = "0 0 0" xyz = "-0.0012820959091186523 0.030645132064819336 0.12021106481552124" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<link name="index_dist" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -144,40 +144,40 @@
 		<parent link="index_inter" />
 		<child link="index_dist" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.12339383363723755" />
+		<origin rpy = "0 0 0" xyz = "-0.0008243322372436523 0.028004944324493408 0.12339383363723755" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<!-- middle -->
 	<link name="middle_prox" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
 	<joint name="middle_prox" type="revolute" >
 		<parent link="wrist" />
 		<child link="middle_prox" />
-		<origin rpy = "0 0 0.1" xyz = "-0.08907824754714966 0.19644707441329956 0.7083621025085449" />
+		<origin rpy = "0 0 0" xyz = "-0.08907824754714966 0.19644707441329956 0.7083621025085449" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
     	<limit effort="1000" lower="0" upper="1.57" velocity="0.5"/>
 	</joint>
 	<link name="middle_inter" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -185,19 +185,19 @@
 		<parent link="middle_prox" />
 		<child link="middle_inter" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.12114346027374268" />
+		<origin rpy = "0 0 0" xyz = "-0.024123787879943848 0.04249602556228638 0.12114346027374268" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<link name="middle_dist" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -205,40 +205,40 @@
 		<parent link="middle_inter" />
 		<child link="middle_dist" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.12368118762969971" />
+		<origin rpy = "0 0 0" xyz = "-0.020906776189804077 0.024646222591400146 0.12368118762969971" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<!-- ring -->
 	<link name="ring_prox" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
 	<joint name="ring_prox" type="revolute" >
 		<parent link="wrist" />
 		<child link="ring_prox" />
-		<origin rpy = "0 -0.05 0.11" xyz = "-0.20733147859573364 0.18892675638198853 0.6320534348487854" />
+		<origin rpy = "0 0 0" xyz = "-0.20733147859573364 0.18892675638198853 0.6320534348487854" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
     	<limit effort="1000" lower="0" upper="1.57" velocity="0.5"/>
 	</joint>
 	<link name="ring_inter" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -246,19 +246,19 @@
 		<parent link="ring_prox" />
 		<child link="ring_inter" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.11856430768966675" />
+		<origin rpy = "0 0 0" xyz = "-0.04373997449874878 0.03548264503479004 0.11856430768966675" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<link name="ring_dist" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -266,40 +266,40 @@
 		<parent link="ring_inter" />
 		<child link="ring_dist" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.10368543863296509" />
+		<origin rpy = "0 0 0" xyz = "-0.03399193286895752 7.867813110351562e-05 0.10368543863296509" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<!-- pinkie -->
 	<link name="pinkie_prox" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
 	<joint name="pinkie_prox" type="revolute" >
 		<parent link="wrist" />
 		<child link="pinkie_prox" />
-		<origin rpy = "0 -0.13 0.21" xyz = "-0.30925989151000977 0.1727619767189026 0.501175045967102" />
+		<origin rpy = "0 0 0" xyz = "-0.30925989151000977 0.1727619767189026 0.501175045967102" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
     	<limit effort="1000" lower="0" upper="1.57" velocity="0.5"/>
 	</joint>
 	<link name="pinkie_inter" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -307,19 +307,19 @@
 		<parent link="pinkie_prox" />
 		<child link="pinkie_inter" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.08920609951019287" />
+		<origin rpy = "0 0 0" xyz = "-0.05650430917739868 0.011394917964935303 0.08920609951019287" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 	<link name="pinkie_dist" >
 		<inertial>
-            <origin rpy = "0 0 0" xyz = "0 0 0.04" />
+            <origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<mass value = "0.05" />
 			<inertia ixx = "0.1" ixy = "0" ixz = "0" iyy = "0.1" iyz = "0" izz = "0.1" />
 		</inertial>
 		<collision>
-			<origin rpy = "0 0 0" xyz = "0 0 0.04" />
+			<origin rpy = "0 0 0" xyz = "0 0 0.05" />
 			<geometry>
-				<box size="0.05 0.05 0.08" />
+				<box size="0.05 0.05 0.1" />
 			</geometry>
 		</collision>
 	</link>
@@ -327,7 +327,7 @@
 		<parent link="pinkie_inter" />
 		<child link="pinkie_dist" />
 		<limit effort="1000.0" lower="0" upper="1.57" velocity="0.5"/>
-		<origin rpy = "0 0 0" xyz = "0 0 0.08677315711975098" />
+		<origin rpy = "0 0 0" xyz = "-0.040886253118515015 0.006254315376281738 0.08677315711975098" />
 		<axis xyz = "1.000000 0.000000 0.000000" />
 	</joint>
 </robot>
