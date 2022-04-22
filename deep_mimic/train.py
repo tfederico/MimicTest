@@ -12,7 +12,6 @@ import wandb
 import argparse
 from wandb.integration.sb3 import WandbCallback
 from datetime import datetime
-import multiprocessing
 
 
 
@@ -53,9 +52,9 @@ def main(args):
         norm_reward=False,
         norm_obs=True,
         learning_rate=args.learning_rate,
-        n_steps=4096,
-        batch_size=256,
-        n_epochs=3,
+        n_steps=args.n_steps,
+        batch_size=args.batch_size,
+        n_epochs=args.n_epochs,
         gamma=args.gamma,
         gae_lambda=0.95,
         clip_range=0.2,
@@ -107,7 +106,7 @@ def main(args):
         seed=model_args['seed']
     )
     env.save(log_dir+"/vecnormalize.pkl")
-    n_steps = int(10e7)
+    n_steps = int(20e7)
     with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
         model.learn(n_steps, callback=[prog_callback, callback])
 
@@ -123,6 +122,9 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=3.0e-6)
     parser.add_argument('--gamma', type=float, default=0.95)
     parser.add_argument('--weight_decay', type=float, default=1.0e-5)
+    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--n_steps', type=int, default=4096)
+    parser.add_argument('--n_epochs', type=int, default=3)
     parser.add_argument('--seed', type=int, default=8)
 
     args = parser.parse_args()

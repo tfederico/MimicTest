@@ -1,5 +1,5 @@
 entity: mrroboto
-project: ppo
+project: tuning-new-hand
 program: deep_mimic.train
 command:
   - ${env}
@@ -13,7 +13,7 @@ metric:
   goal: maximize
 parameters:
   log_std_init:
-    values: [-5, -3, -1]
+    values: [-5, -3, -1, 1]
   ortho_init:
     values: [true, false]
   learning_rate:

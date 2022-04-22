@@ -7,10 +7,10 @@ from stable_baselines3.common.vec_env import VecNormalize
 import numpy as np
 
 
-log_dir = "output/"
+log_dir = "output/2022-04-13 16:31:23.651305/"
 env_name = 'HandDeepMimicSignerBulletEnv-v1'
 
-env = make_vec_env(env_name)
+env = make_vec_env(env_name, env_kwargs=dict(renders=True))
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
 
 model = PPO.load(log_dir+"best_model", env=env)
@@ -29,11 +29,4 @@ while not all(dones):
     tot_rew += rewards
 
 print(tot_rew)
-
-actions = np.array(actions)
-
-for i in range(15):
-    min = np.min(actions[:, 0, i])
-    max = np.max(actions[:, 0, i])
-    print(i, min, max)
 
