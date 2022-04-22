@@ -1,5 +1,5 @@
 entity: mrroboto
-project: tuning-new-hand
+project: tunetunetune
 program: deep_mimic.train
 command:
   - ${env}
