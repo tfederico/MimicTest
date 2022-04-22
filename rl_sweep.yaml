@@ -7,18 +7,22 @@ command:
   - '-m'
   - ${program}
   - ${args}
-method: bayes
+method: grid
 metric:
   name: eval/mean_reward
   goal: maximize
 parameters:
   log_std_init:
-    values: [-5, -3, -1, 1]
+    values: [-3, -2, -1]
   ortho_init:
-    values: [true, false]
+    values: [false]
   learning_rate:
-    values: [3.0e-4, 1.0e-4, 3.0e-5, 3.0e-6, 3.0e-7]
+    values: [3.0e-5, 3.0e-6]
   gamma:
-    values: [0.9, 0.92, 0.94, 0.95, 0.98]
-  weight_decay:
-    values: [1.0e-4, 1.0e-5, 1.0e-6]
+    values: [0.9, 0.95]
+  batch_size:
+    values: [128, 256, 512]
+  n_steps:
+    values: [512, 4096]
+  n_epochs:
+    values: [3, 10]

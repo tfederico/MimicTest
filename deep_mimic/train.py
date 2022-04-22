@@ -106,7 +106,7 @@ def main(args):
         seed=model_args['seed']
     )
     env.save(log_dir+"/vecnormalize.pkl")
-    n_steps = int(20e7)
+    n_steps = args.n_steps
     with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
         model.learn(n_steps, callback=[prog_callback, callback])
 
@@ -117,6 +117,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--n_steps', type=int, default=5e7)
     parser.add_argument('--log_std_init', type=int, default=-3)
     parser.add_argument('--ortho_init', type=str2bool, default=True)
     parser.add_argument('--learning_rate', type=float, default=3.0e-6)
