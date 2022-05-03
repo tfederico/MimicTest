@@ -73,7 +73,7 @@ def main(args):
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name)
+    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir,
                                  log_path=log_dir, n_eval_episodes=100,
@@ -84,7 +84,7 @@ def main(args):
     n_envs = 100
 
     #env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, vec_env_kwargs=dict(start_method='fork'))
-    env = DummyVecEnv([lambda: Monitor(gym.make(env_name), log_dir) for _ in range(n_envs)])
+    env = DummyVecEnv([lambda: Monitor(gym.make(env_name, **dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")), log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
     model = PPO(
@@ -117,6 +117,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--motion_file', type=str, default="signer")
     parser.add_argument('--glob_n_steps', type=int, default=5e7)
     parser.add_argument('--log_std_init', type=int, default=-3)
     parser.add_argument('--ortho_init', type=str2bool, default=True)
