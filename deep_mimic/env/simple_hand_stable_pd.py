@@ -634,11 +634,11 @@ def tune_controller(args):
     wandb.init(config=args)
     args = wandb.config
 
-    arg_file = "run_humanoid3d_signer_args.txt"
+    arg_file = "run_humanoid3d_F_args.txt"
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1. / 1440
+    timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
     _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
@@ -699,7 +699,7 @@ def tune_controller(args):
         desired_pose = _humanoid.convertActionToPose(action[7:])
         desired_pose[:7] = [0] * 7
 
-        for i in range(1440//30):
+        for i in range(240//30):
             _pybullet_client.setTimeStep(timeStep)
             _humanoid._timeStep = timeStep
             t += timeStep
@@ -714,7 +714,7 @@ def tune_controller(args):
             _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
             _pybullet_client.stepSimulation()
-            time.sleep(1/1440)
+            time.sleep(1/240)
 
         state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
         simPose = [s[0] for s in state]
