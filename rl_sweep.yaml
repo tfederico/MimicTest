@@ -1,5 +1,5 @@
 entity: mrroboto
-project: tunetunetune
+project: final_tune
 program: deep_mimic.train
 command:
   - ${env}
@@ -12,10 +12,12 @@ metric:
   name: eval/mean_reward
   goal: maximize
 parameters:
+  motion_file:
+    values: ["tuning_motion"]
   log_std_init:
     values: [-3, -2, -1]
   ortho_init:
-    values: [false]
+    values: [false, true]
   learning_rate:
     values: [3.0e-5, 3.0e-6]
   gamma:
@@ -25,4 +27,6 @@ parameters:
   n_steps:
     values: [512, 4096]
   n_epochs:
-    values: [3, 10]
+    values: [3, 5, 10]
+  weight_decay:
+    values: [1.0e-4, 1.0e-5, 1.0e-6]
