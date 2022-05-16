@@ -634,7 +634,7 @@ def tune_controller(args):
     wandb.init(config=args)
     args = wandb.config
 
-    arg_file = "run_humanoid3d_F_args.txt"
+    arg_file = "run_humanoid3d_tuning_args.txt"
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
@@ -690,7 +690,7 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(700)
+    steps = range(9000)
     print(len(_mocapData._motion_data['Frames']))
 
     for i in steps:
@@ -699,7 +699,7 @@ def tune_controller(args):
         desired_pose = _humanoid.convertActionToPose(action[7:])
         desired_pose[:7] = [0] * 7
 
-        for i in range(240//30):
+        for i in range(240//240):
             _pybullet_client.setTimeStep(timeStep)
             _humanoid._timeStep = timeStep
             t += timeStep
