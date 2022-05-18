@@ -33,7 +33,7 @@ class HandStablePD(object):
         print("LOADING humanoid!")
         flags = self._pybullet_client.URDF_MAINTAIN_LINK_ORDER + self._pybullet_client.URDF_USE_SELF_COLLISION + self._pybullet_client.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
         self._sim_model = self._pybullet_client.loadURDF(
-            "humanoid/new_simple_hand.urdf", [0, 0.5, 0],
+            "humanoid/new_simple_hand_thumb.urdf", [0, 0.5, 0],
             globalScaling=0.25,
             useFixedBase=useFixedBase,
             flags=flags)
@@ -47,7 +47,7 @@ class HandStablePD(object):
         self._end_effectors = [thumb_dist, index_dist, middle_dist, ring_dist, pinkie_dist]
 
         self._kin_model = self._pybullet_client.loadURDF(
-            "humanoid/new_simple_hand.urdf", [0, 0.5, 0],
+            "humanoid/new_simple_hand_thumb.urdf", [0, 0.5, 0],
             globalScaling=0.25,
             useFixedBase=True,
             flags=self._pybullet_client.URDF_MAINTAIN_LINK_ORDER)
@@ -98,7 +98,7 @@ class HandStablePD(object):
         if kd:
             self._kdOrg = [0] * 7 + [kd] * 15
         else:
-            self._kdOrg = [0] * 7 + [1.5] * 15 #1.5 for 1/240, 1.05 for 1/30, 1.3 for 1/480, 1.2 for 1/1440
+            self._kdOrg = [0] * 7 + [1.3] * 15 #1.5 for 1/240, 1.05 for 1/30, 1.3 for 1/480, 1.2 for 1/1440
 
 
         self._jointIndicesAll = [
@@ -634,7 +634,7 @@ def tune_controller(args):
     wandb.init(config=args)
     args = wandb.config
 
-    arg_file = "run_humanoid3d_tuning_args.txt"
+    arg_file = "run_humanoid3d_tuning_motion_args.txt"
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
