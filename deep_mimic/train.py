@@ -12,7 +12,6 @@ import wandb
 import argparse
 from wandb.integration.sb3 import WandbCallback
 from datetime import datetime
-import multiprocessing
 
 
 
@@ -53,9 +52,9 @@ def main(args):
         norm_reward=False,
         norm_obs=True,
         learning_rate=args.learning_rate,
-        n_steps=4096,
-        batch_size=256,
-        n_epochs=3,
+        n_steps=args.n_steps,
+        batch_size=args.batch_size,
+        n_epochs=args.n_epochs,
         gamma=args.gamma,
         gae_lambda=0.95,
         clip_range=0.2,
@@ -74,7 +73,7 @@ def main(args):
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name)
+    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir,
                                  log_path=log_dir, n_eval_episodes=100,
@@ -85,7 +84,7 @@ def main(args):
     n_envs = 100
 
     #env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, vec_env_kwargs=dict(start_method='fork'))
-    env = DummyVecEnv([lambda: Monitor(gym.make(env_name), log_dir) for _ in range(n_envs)])
+    env = DummyVecEnv([lambda: Monitor(gym.make(env_name, **dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")), log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
     model = PPO(
@@ -107,7 +106,7 @@ def main(args):
         seed=model_args['seed']
     )
     env.save(log_dir+"/vecnormalize.pkl")
-    n_steps = int(10e7)
+    n_steps = args.glob_n_steps
     with ProgressBarManager(n_steps) as prog_callback: # tqdm progress bar closes correctly
         model.learn(n_steps, callback=[prog_callback, callback])
 
@@ -118,11 +117,16 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--motion_file', type=str, default="signer")
+    parser.add_argument('--glob_n_steps', type=int, default=5e7)
     parser.add_argument('--log_std_init', type=int, default=-3)
     parser.add_argument('--ortho_init', type=str2bool, default=True)
     parser.add_argument('--learning_rate', type=float, default=3.0e-6)
     parser.add_argument('--gamma', type=float, default=0.95)
     parser.add_argument('--weight_decay', type=float, default=1.0e-5)
+    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--n_steps', type=int, default=4096)
+    parser.add_argument('--n_epochs', type=int, default=3)
     parser.add_argument('--seed', type=int, default=8)
 
     args = parser.parse_args()

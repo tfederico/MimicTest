@@ -33,7 +33,7 @@ class HandStablePD(object):
         print("LOADING humanoid!")
         flags = self._pybullet_client.URDF_MAINTAIN_LINK_ORDER + self._pybullet_client.URDF_USE_SELF_COLLISION + self._pybullet_client.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
         self._sim_model = self._pybullet_client.loadURDF(
-            "humanoid/new_simple_hand.urdf", [0, 0.5, 0],
+            "humanoid/new_simple_hand_thumb.urdf", [0, 0.5, 0],
             globalScaling=0.25,
             useFixedBase=useFixedBase,
             flags=flags)
@@ -47,7 +47,7 @@ class HandStablePD(object):
         self._end_effectors = [thumb_dist, index_dist, middle_dist, ring_dist, pinkie_dist]
 
         self._kin_model = self._pybullet_client.loadURDF(
-            "humanoid/new_simple_hand.urdf", [0, 0.5, 0],
+            "humanoid/new_simple_hand_thumb.urdf", [0, 0.5, 0],
             globalScaling=0.25,
             useFixedBase=True,
             flags=self._pybullet_client.URDF_MAINTAIN_LINK_ORDER)
@@ -93,12 +93,12 @@ class HandStablePD(object):
         if kp:
             self._kpOrg = [0] * 7 + [kp] * 15
         else:
-            self._kpOrg = [0] * 7 + [0.05] * 15
+            self._kpOrg = [0] * 7 + [0.22] * 15 #0.05 for 1/240, 1.0 for 1/30, 0.01 for 1/480, 0.004 for 1/1440
 
         if kd:
             self._kdOrg = [0] * 7 + [kd] * 15
         else:
-            self._kdOrg = [0] * 7 + [1.5] * 15
+            self._kdOrg = [0] * 7 + [0.87] * 15 #1.5 for 1/240, 1.05 for 1/30, 1.3 for 1/480, 1.2 for 1/1440
 
 
         self._jointIndicesAll = [
@@ -634,13 +634,13 @@ def tune_controller(args):
     wandb.init(config=args)
     args = wandb.config
 
-    arg_file = "run_humanoid3d_signer_args.txt"
+    arg_file = "run_humanoid3d_tuning_motion_args.txt"
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
     timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
-    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.DIRECT)
+    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
     _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
     _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -690,7 +690,7 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(700*8)
+    steps = range(900)
     print(len(_mocapData._motion_data['Frames']))
 
     for i in steps:
@@ -699,21 +699,22 @@ def tune_controller(args):
         desired_pose = _humanoid.convertActionToPose(action[7:])
         desired_pose[:7] = [0] * 7
 
-        # for _ in range(8):
-        _pybullet_client.setTimeStep(timeStep)
-        _humanoid._timeStep = timeStep
-        t += timeStep
-        _humanoid.setSimTime(t)
-        kinPose = _humanoid.computePose(_humanoid._frameFraction)
+        for i in range(240//240):
+            _pybullet_client.setTimeStep(timeStep)
+            _humanoid._timeStep = timeStep
+            t += timeStep
+            _humanoid.setSimTime(t)
+            kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-        _humanoid.getReward(kinPose)
-        rewards.append(_humanoid._info_err)
-        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
-        maxForces = [0] * 7 + [10] * 15
+            _humanoid.getReward(kinPose)
+            rewards.append(_humanoid._info_err)
+            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+            maxForces = [0] * 7 + [100] * 15
 
-        _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
-        _pybullet_client.stepSimulation()
+            _pybullet_client.stepSimulation()
+            time.sleep(1/240)
 
         state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
         simPose = [s[0] for s in state]
@@ -721,28 +722,34 @@ def tune_controller(args):
         kinVelocities = _humanoid._poseInterpolator.GetVelocities()
         simVelocities = [s[1] for s in state]
 
-        kin_joint.append(kinPose[10])
-        sim_joint.append(simPose[10])
-        #
-        # kin_vel.append(kinVelocities[1])
-        # sim_vel.append(simVelocities[1])
-    #
-        # time.sleep(1/30)
-    #
-    # import matplotlib.pyplot as plt
-    #
-    # fig, ax = plt.subplots(6)
-    #
-    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue")
-    # ax[1].plot(list(range(len(steps))), sim_joint, color="red")
-    # # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # # ax[0].plot(list(steps), pos_err, color="green")
-    #
-    # # abs_pos_err = [p*p for p in pos_err]
-    # # ax[1].plot(list(steps), kin_vel, color="blue")
-    # # ax[1].plot(list(steps), sim_vel, color="red")
-    # # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # # ax[1].plot(list(steps), vel_err, color="green")
+        kin_joint.append(kinPose[7:][7])
+        sim_joint.append(simPose[7:][7])
+
+        kin_vel.append(kinVelocities[7])
+        sim_vel.append(simVelocities[7])
+
+
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(2)
+
+    ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
+    ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
+    ax[0].set_ylabel("rad")
+    ax[0].legend()
+    pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
+    # ax[0].plot(list(steps), pos_err, color="black")
+
+    # abs_pos_err = [p*p for p in pos_err]
+    ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
+    ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
+    ax[1].set_ylabel("rad/s")
+    ax[1].set_xlabel("steps")
+    ax[1].legend()
+
+    vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
+    # ax[1].plot(list(steps), vel_err, color="black")
     #
     # # ax[2].plot(list(range(len(steps)*8)), rewards)
     #
@@ -755,12 +762,12 @@ def tune_controller(args):
     # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
     # ax[5].set_ylabel("root")
     #
-    # plt.show()
+    plt.show()
 
     log = {
-        "pose": sum([r['pose_err'] for r in rewards]),
-        "velocity": sum([r['vel_err'] for r in rewards]),
-        "error": sum([r['pose_err'] for r in rewards]) + sum([r['vel_err'] for r in rewards])
+        "pose": sum([abs(v) for v in pos_err]),
+        "velocity": sum([abs(v) for v in vel_err]),
+        "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
     }
 
     wandb.log(log)
