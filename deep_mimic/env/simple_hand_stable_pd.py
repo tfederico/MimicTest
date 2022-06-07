@@ -93,12 +93,12 @@ class HandStablePD(object):
         if kp:
             self._kpOrg = [0] * 7 + [kp] * 15
         else:
-            self._kpOrg = [0] * 7 + [0.05] * 15 #0.05 for 1/240, 1.0 for 1/30, 0.01 for 1/480, 0.004 for 1/1440
+            self._kpOrg = [0] * 7 + [0.22] * 15 #0.05 for 1/240, 1.0 for 1/30, 0.01 for 1/480, 0.004 for 1/1440
 
         if kd:
             self._kdOrg = [0] * 7 + [kd] * 15
         else:
-            self._kdOrg = [0] * 7 + [1.3] * 15 #1.5 for 1/240, 1.05 for 1/30, 1.3 for 1/480, 1.2 for 1/1440
+            self._kdOrg = [0] * 7 + [0.87] * 15 #1.5 for 1/240, 1.05 for 1/30, 1.3 for 1/480, 1.2 for 1/1440
 
 
         self._jointIndicesAll = [
@@ -690,7 +690,7 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(9000)
+    steps = range(900)
     print(len(_mocapData._motion_data['Frames']))
 
     for i in steps:
@@ -733,35 +733,35 @@ def tune_controller(args):
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(2)
-    #
+
     ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
     ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
     ax[0].set_ylabel("rad")
     ax[0].legend()
     pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # # ax[0].plot(list(steps), pos_err, color="black")
-    #
-    # # abs_pos_err = [p*p for p in pos_err]
+    # ax[0].plot(list(steps), pos_err, color="black")
+
+    # abs_pos_err = [p*p for p in pos_err]
     ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
     ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
     ax[1].set_ylabel("rad/s")
     ax[1].set_xlabel("steps")
     ax[1].legend()
-    #
+
     vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # # ax[1].plot(list(steps), vel_err, color="black")
-    # #
-    # # # ax[2].plot(list(range(len(steps)*8)), rewards)
-    # #
-    # # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
-    # # ax[2].set_ylabel("pose")
-    # # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
-    # # ax[3].set_ylabel("vel")
-    # # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
-    # # ax[4].set_ylabel("end_eff")
-    # # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
-    # # ax[5].set_ylabel("root")
-    # #
+    # ax[1].plot(list(steps), vel_err, color="black")
+    #
+    # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    #
+    # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
+    # ax[2].set_ylabel("pose")
+    # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
+    # ax[3].set_ylabel("vel")
+    # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
+    # ax[4].set_ylabel("end_eff")
+    # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
+    # ax[5].set_ylabel("root")
+    #
     plt.show()
 
     log = {

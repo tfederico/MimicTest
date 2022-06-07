@@ -286,6 +286,6 @@ class HandDeepBulletEnv(gym.Env):
 class HandDeepMimicSignerBulletEnv(HandDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file="run_humanoid3d_signer_args.txt"):
+    def __init__(self, renders=False, arg_file="run_humanoid3d_signer_args.txt", test_mode=False):
         # start the bullet physics server
-        HandDeepBulletEnv.__init__(self, renders, arg_file)
+        HandDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
