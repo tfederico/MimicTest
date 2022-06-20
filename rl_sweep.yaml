@@ -1,5 +1,5 @@
 entity: mrroboto
-project: final_tune
+project: final_final_tune
 program: deep_mimic.train
 command:
   - ${env}
@@ -7,7 +7,7 @@ command:
   - '-m'
   - ${program}
   - ${args}
-method: grid
+method: bayes
 metric:
   name: eval/mean_reward
   goal: maximize
@@ -19,7 +19,7 @@ parameters:
   ortho_init:
     values: [false, true]
   learning_rate:
-    values: [3.0e-5, 3.0e-6]
+    values: [3.0e-5, 1.0e-5, 1.0e-6, 3.0e-6]
   gamma:
     values: [0.9, 0.95]
   batch_size:
