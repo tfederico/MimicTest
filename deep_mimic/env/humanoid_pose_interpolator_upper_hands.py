@@ -1,7 +1,7 @@
 import math
 
 
-class HumanoidPoseInterpolator(object):
+class WholeHumanoidPoseInterpolator(object):
 
     def __init__(self):
         pass
@@ -267,6 +267,24 @@ class HumanoidPoseInterpolator(object):
         ]
         return pose
 
+    def GetVelocities(self):
+        vel = [
+            *self._baseLinVel, *self._chestVel, *self._neckVel, *self._rightHipVel, *self._rightKneeVel,
+            *self._rightAnkleVel, *self._rightShoulderVel, *self._rightElbowVel, *self._rightWristVel,
+            *self._rightThumbProxVel, *self._rightThumbInterVel, *self._rightThumbDistVel,
+            *self._rightIndexProxVel, *self._rightIndexInterVel, *self._rightIndexDistVel,
+            *self._rightMiddleProxVel, *self._rightMiddleInterVel, *self._rightMiddleDistVel,
+            *self._rightRingProxVel, *self._rightRingInterVel, *self._rightRingDistVel,
+            *self._rightPinkieProxVel, *self._rightPinkieInterVel, *self._rightPinkieDistVel,
+            *self._leftHipVel, *self._leftKneeVel, *self._leftAnkleVel, *self._leftShoulderVel,
+            *self._leftElbowVel, *self._leftWristVel, *self._leftThumbProxVel, *self._leftThumbInterVel,
+            *self._leftThumbDistVel, *self._leftIndexProxVel, *self._leftIndexInterVel, *self._leftIndexDistVel,
+            *self._leftMiddleProxVel, *self._leftMiddleInterVel, *self._leftMiddleDistVel, *self._leftRingProxVel,
+            *self._leftRingInterVel, *self._leftRingDistVel, *self._leftPinkieProxVel, *self._leftPinkieInterVel,
+            *self._leftPinkieDistVel
+        ]
+        return vel
+
     def Slerp(self, frameFraction, frameData, frameDataNext, bullet_client):
         keyFrameDuration = frameData[0]
         basePos1Start = [frameData[1], frameData[2], frameData[3]]
@@ -351,12 +369,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._rightThumbProxVel = [(rightThumbProxEnd[0] - rightThumbProxStart[0]) / keyFrameDuration]
 
-        rightThumbIntStart = [frameData[32]]
-        rightThumbIntEnd = [frameDataNext[32]]
-        self._rightThumbInt = [
-            rightThumbIntStart[0] + frameFraction * (rightThumbIntEnd[0] - rightThumbIntStart[0])
+        rightThumbInterStart = [frameData[32]]
+        rightThumbInterEnd = [frameDataNext[32]]
+        self._rightThumbInter = [
+            rightThumbInterStart[0] + frameFraction * (rightThumbInterEnd[0] - rightThumbInterStart[0])
         ]
-        self._rightThumbIntVel = [(rightThumbIntEnd[0] - rightThumbIntStart[0]) / keyFrameDuration]
+        self._rightThumbInterVel = [(rightThumbInterEnd[0] - rightThumbInterStart[0]) / keyFrameDuration]
 
         rightThumbDistStart = [frameData[33]]
         rightThumbDistEnd = [frameDataNext[33]]
@@ -372,12 +390,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._rightIndexProxVel = [(rightIndexProxEnd[0] - rightIndexProxStart[0]) / keyFrameDuration]
 
-        rightIndexIntStart = [frameData[35]]
-        rightIndexIntEnd = [frameDataNext[35]]
-        self._rightIndexInt = [
-            rightIndexIntStart[0] + frameFraction * (rightIndexIntEnd[0] - rightIndexIntStart[0])
+        rightIndexInterStart = [frameData[35]]
+        rightIndexInterEnd = [frameDataNext[35]]
+        self._rightIndexInter = [
+            rightIndexInterStart[0] + frameFraction * (rightIndexInterEnd[0] - rightIndexInterStart[0])
         ]
-        self._rightIndexIntVel = [(rightIndexIntEnd[0] - rightIndexIntStart[0]) / keyFrameDuration]
+        self._rightIndexInterVel = [(rightIndexInterEnd[0] - rightIndexInterStart[0]) / keyFrameDuration]
 
         rightIndexDistStart = [frameData[36]]
         rightIndexDistEnd = [frameDataNext[36]]
@@ -393,12 +411,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._rightMiddleProxVel = [(rightMiddleProxEnd[0] - rightMiddleProxStart[0]) / keyFrameDuration]
 
-        rightMiddleIntStart = [frameData[38]]
-        rightMiddleIntEnd = [frameDataNext[38]]
-        self._rightMiddleInt = [
-            rightMiddleIntStart[0] + frameFraction * (rightMiddleIntEnd[0] - rightMiddleIntStart[0])
+        rightMiddleInterStart = [frameData[38]]
+        rightMiddleInterEnd = [frameDataNext[38]]
+        self._rightMiddleInter = [
+            rightMiddleInterStart[0] + frameFraction * (rightMiddleInterEnd[0] - rightMiddleInterStart[0])
         ]
-        self._rightMiddleIntVel = [(rightMiddleIntEnd[0] - rightMiddleIntStart[0]) / keyFrameDuration]
+        self._rightMiddleInterVel = [(rightMiddleInterEnd[0] - rightMiddleInterStart[0]) / keyFrameDuration]
 
         rightMiddleDistStart = [frameData[39]]
         rightMiddleDistEnd = [frameDataNext[39]]
@@ -414,12 +432,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._rightRingProxVel = [(rightRingProxEnd[0] - rightRingProxStart[0]) / keyFrameDuration]
 
-        rightRingIntStart = [frameData[41]]
-        rightRingIntEnd = [frameDataNext[41]]
-        self._rightRingInt = [
-            rightRingIntStart[0] + frameFraction * (rightRingIntEnd[0] - rightRingIntStart[0])
+        rightRingInterStart = [frameData[41]]
+        rightRingInterEnd = [frameDataNext[41]]
+        self._rightRingInter = [
+            rightRingInterStart[0] + frameFraction * (rightRingInterEnd[0] - rightRingInterStart[0])
         ]
-        self._rightRingIntVel = [(rightRingIntEnd[0] - rightRingIntStart[0]) / keyFrameDuration]
+        self._rightRingInterVel = [(rightRingInterEnd[0] - rightRingInterStart[0]) / keyFrameDuration]
 
         rightRingDistStart = [frameData[42]]
         rightRingDistEnd = [frameDataNext[42]]
@@ -428,26 +446,26 @@ class HumanoidPoseInterpolator(object):
         ]
         self._rightRingDistVel = [(rightRingDistEnd[0] - rightRingDistStart[0]) / keyFrameDuration]
 
-        rightPinkyProxStart = [frameData[43]]
-        rightPinkyProxEnd = [frameDataNext[43]]
-        self._rightPinkyProx = [
-            rightPinkyProxStart[0] + frameFraction * (rightPinkyProxEnd[0] - rightPinkyProxStart[0])
+        rightPinkieProxStart = [frameData[43]]
+        rightPinkieProxEnd = [frameDataNext[43]]
+        self._rightPinkieProx = [
+            rightPinkieProxStart[0] + frameFraction * (rightPinkieProxEnd[0] - rightPinkieProxStart[0])
         ]
-        self._rightPinkyProxVel = [(rightPinkyProxEnd[0] - rightPinkyProxStart[0]) / keyFrameDuration]
+        self._rightPinkieProxVel = [(rightPinkieProxEnd[0] - rightPinkieProxStart[0]) / keyFrameDuration]
 
-        rightPinkyIntStart = [frameData[44]]
-        rightPinkyIntEnd = [frameDataNext[44]]
-        self._rightPinkyInt = [
-            rightPinkyIntStart[0] + frameFraction * (rightPinkyIntEnd[0] - rightPinkyIntStart[0])
+        rightPinkieInterStart = [frameData[44]]
+        rightPinkieInterEnd = [frameDataNext[44]]
+        self._rightPinkieInter = [
+            rightPinkieInterStart[0] + frameFraction * (rightPinkieInterEnd[0] - rightPinkieInterStart[0])
         ]
-        self._rightPinkyIntVel = [(rightPinkyIntEnd[0] - rightPinkyIntStart[0]) / keyFrameDuration]
+        self._rightPinkieInterVel = [(rightPinkieInterEnd[0] - rightPinkieInterStart[0]) / keyFrameDuration]
 
-        rightPinkyDistStart = [frameData[45]]
-        rightPinkyDistEnd = [frameDataNext[45]]
-        self._rightPinkyDist = [
-            rightPinkyDistStart[0] + frameFraction * (rightPinkyDistEnd[0] - rightPinkyDistStart[0])
+        rightPinkieDistStart = [frameData[45]]
+        rightPinkieDistEnd = [frameDataNext[45]]
+        self._rightPinkieDist = [
+            rightPinkieDistStart[0] + frameFraction * (rightPinkieDistEnd[0] - rightPinkieDistStart[0])
         ]
-        self._rightPinkyDistVel = [(rightPinkyDistEnd[0] - rightPinkyDistStart[0]) / keyFrameDuration]
+        self._rightPinkieDistVel = [(rightPinkieDistEnd[0] - rightPinkieDistStart[0]) / keyFrameDuration]
 
         leftHipRotStart = [frameData[47], frameData[48], frameData[49], frameData[46]]
         leftHipRotEnd = [frameDataNext[47], frameDataNext[48], frameDataNext[49], frameDataNext[46]]
@@ -500,12 +518,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._leftThumbProxVel = [(leftThumbProxEnd[0] - leftThumbProxStart[0]) / keyFrameDuration]
 
-        leftThumbIntStart = [frameData[62]]
-        leftThumbIntEnd = [frameDataNext[62]]
-        self._leftThumbInt = [
-            leftThumbIntStart[0] + frameFraction * (leftThumbIntEnd[0] - leftThumbIntStart[0])
+        leftThumbInterStart = [frameData[62]]
+        leftThumbInterEnd = [frameDataNext[62]]
+        self._leftThumbInter = [
+            leftThumbInterStart[0] + frameFraction * (leftThumbInterEnd[0] - leftThumbInterStart[0])
         ]
-        self._leftThumbIntVel = [(leftThumbIntEnd[0] - leftThumbIntStart[0]) / keyFrameDuration]
+        self._leftThumbInterVel = [(leftThumbInterEnd[0] - leftThumbInterStart[0]) / keyFrameDuration]
 
         leftThumbDistStart = [frameData[63]]
         leftThumbDistEnd = [frameDataNext[63]]
@@ -521,12 +539,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._leftIndexProxVel = [(leftIndexProxEnd[0] - leftIndexProxStart[0]) / keyFrameDuration]
 
-        leftIndexIntStart = [frameData[65]]
-        leftIndexIntEnd = [frameDataNext[65]]
-        self._leftIndexInt = [
-            leftIndexIntStart[0] + frameFraction * (leftIndexIntEnd[0] - leftIndexIntStart[0])
+        leftIndexInterStart = [frameData[65]]
+        leftIndexInterEnd = [frameDataNext[65]]
+        self._leftIndexInter = [
+            leftIndexInterStart[0] + frameFraction * (leftIndexInterEnd[0] - leftIndexInterStart[0])
         ]
-        self._leftIndexIntVel = [(leftIndexIntEnd[0] - leftIndexIntStart[0]) / keyFrameDuration]
+        self._leftIndexInterVel = [(leftIndexInterEnd[0] - leftIndexInterStart[0]) / keyFrameDuration]
 
         leftIndexDistStart = [frameData[66]]
         leftIndexDistEnd = [frameDataNext[66]]
@@ -542,11 +560,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._leftMiddleProxVel = [(leftMiddleProxEnd[0] - leftMiddleProxStart[0]) / keyFrameDuration]
 
-        leftMiddleIntStart = [frameData[68]]
-        leftMiddleIntEnd = [frameDataNext[68]]
-        self._leftMiddleInt = [
-            leftMiddleIntStart[0] + frameFraction * (leftMiddleIntEnd[0] - leftMiddleIntStart[0])
+        leftMiddleInterStart = [frameData[68]]
+        leftMiddleInterEnd = [frameDataNext[68]]
+        self._leftMiddleInter = [
+            leftMiddleInterStart[0] + frameFraction * (leftMiddleInterEnd[0] - leftMiddleInterStart[0])
         ]
+        self._leftMiddleInterVel = [(leftMiddleInterEnd[0] - leftMiddleInterStart[0]) / keyFrameDuration]
 
         leftMiddleDistStart = [frameData[69]]
         leftMiddleDistEnd = [frameDataNext[69]]
@@ -562,12 +581,12 @@ class HumanoidPoseInterpolator(object):
         ]
         self._leftRingProxVel = [(leftRingProxEnd[0] - leftRingProxStart[0]) / keyFrameDuration]
 
-        leftRingIntStart = [frameData[71]]
-        leftRingIntEnd = [frameDataNext[71]]
-        self._leftRingInt = [
-            leftRingIntStart[0] + frameFraction * (leftRingIntEnd[0] - leftRingIntStart[0])
+        leftRingInterStart = [frameData[71]]
+        leftRingInterEnd = [frameDataNext[71]]
+        self._leftRingInter = [
+            leftRingInterStart[0] + frameFraction * (leftRingInterEnd[0] - leftRingInterStart[0])
         ]
-        self._leftRingIntVel = [(leftRingIntEnd[0] - leftRingIntStart[0]) / keyFrameDuration]
+        self._leftRingInterVel = [(leftRingInterEnd[0] - leftRingInterStart[0]) / keyFrameDuration]
 
         leftRingDistStart = [frameData[72]]
         leftRingDistEnd = [frameDataNext[72]]
@@ -576,26 +595,26 @@ class HumanoidPoseInterpolator(object):
         ]
         self._leftRingDistVel = [(leftRingDistEnd[0] - leftRingDistStart[0]) / keyFrameDuration]
 
-        leftPinkyProxStart = [frameData[73]]
-        leftPinkyProxEnd = [frameDataNext[73]]
-        self._leftPinkyProx = [
-            leftPinkyProxStart[0] + frameFraction * (leftPinkyProxEnd[0] - leftPinkyProxStart[0])
+        leftPinkieProxStart = [frameData[73]]
+        leftPinkieProxEnd = [frameDataNext[73]]
+        self._leftPinkieProx = [
+            leftPinkieProxStart[0] + frameFraction * (leftPinkieProxEnd[0] - leftPinkieProxStart[0])
         ]
-        self._leftPinkyProxVel = [(leftPinkyProxEnd[0] - leftPinkyProxStart[0]) / keyFrameDuration]
+        self._leftPinkieProxVel = [(leftPinkieProxEnd[0] - leftPinkieProxStart[0]) / keyFrameDuration]
 
-        leftPinkyIntStart = [frameData[74]]
-        leftPinkyIntEnd = [frameDataNext[74]]
-        self._leftPinkyInt = [
-            leftPinkyIntStart[0] + frameFraction * (leftPinkyIntEnd[0] - leftPinkyIntStart[0])
+        leftPinkieInterStart = [frameData[74]]
+        leftPinkieInterEnd = [frameDataNext[74]]
+        self._leftPinkieInter = [
+            leftPinkieInterStart[0] + frameFraction * (leftPinkieInterEnd[0] - leftPinkieInterStart[0])
         ]
-        self._leftPinkyIntVel = [(leftPinkyIntEnd[0] - leftPinkyIntStart[0]) / keyFrameDuration]
+        self._leftPinkieInterVel = [(leftPinkieInterEnd[0] - leftPinkieInterStart[0]) / keyFrameDuration]
 
-        leftPinkyDistStart = [frameData[75]]
-        leftPinkyDistEnd = [frameDataNext[75]]
-        self._leftPinkyDist = [
-            leftPinkyDistStart[0] + frameFraction * (leftPinkyDistEnd[0] - leftPinkyDistStart[0])
+        leftPinkieDistStart = [frameData[75]]
+        leftPinkieDistEnd = [frameDataNext[75]]
+        self._leftPinkieDist = [
+            leftPinkieDistStart[0] + frameFraction * (leftPinkieDistEnd[0] - leftPinkieDistStart[0])
         ]
-        self._leftPinkyDistVel = [(leftPinkyDistEnd[0] - leftPinkyDistStart[0]) / keyFrameDuration]
+        self._leftPinkieDistVel = [(leftPinkieDistEnd[0] - leftPinkieDistStart[0]) / keyFrameDuration]
 
         pose = self.GetPose()
         return pose
@@ -652,7 +671,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._rightThumbInt = [angle]
+        self._rightThumbInter = [angle]
 
         angle = action[index]
         index += 1
@@ -664,7 +683,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._rightIndexInt = [angle]
+        self._rightIndexInter = [angle]
 
         angle = action[index]
         index += 1
@@ -676,7 +695,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._rightMiddleInt = [angle]
+        self._rightMiddleInter = [angle]
 
         angle = action[index]
         index += 1
@@ -688,7 +707,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._rightRingInt = [angle]
+        self._rightRingInter = [angle]
 
         angle = action[index]
         index += 1
@@ -696,15 +715,15 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._rightPinkyProx = [angle]
+        self._rightPinkieProx = [angle]
 
         angle = action[index]
         index += 1
-        self._rightPinkyInt = [angle]
+        self._rightPinkieInter = [angle]
 
         angle = action[index]
         index += 1
-        self._rightPinkyDist = [angle]
+        self._rightPinkieDist = [angle]
 
         """angle = action[index]
         axis = [action[index + 1], action[index + 2], action[index + 3]]
@@ -742,7 +761,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._leftThumbInt = [angle]
+        self._leftThumbInter = [angle]
 
         angle = action[index]
         index += 1
@@ -754,7 +773,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._leftIndexInt = [angle]
+        self._leftIndexInter = [angle]
 
         angle = action[index]
         index += 1
@@ -766,7 +785,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._leftMiddleInt = [angle]
+        self._leftMiddleInter = [angle]
 
         angle = action[index]
         index += 1
@@ -778,7 +797,7 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._leftRingInt = [angle]
+        self._leftRingInter = [angle]
 
         angle = action[index]
         index += 1
@@ -786,15 +805,15 @@ class HumanoidPoseInterpolator(object):
 
         angle = action[index]
         index += 1
-        self._leftPinkyProx = [angle]
+        self._leftPinkieProx = [angle]
 
         angle = action[index]
         index += 1
-        self._leftPinkyInt = [angle]
+        self._leftPinkieInter = [angle]
 
         angle = action[index]
         index += 1
-        self._leftPinkyDist = [angle]
+        self._leftPinkieDist = [angle]
 
         pose = self.GetPose()
         return pose

@@ -1,6 +1,5 @@
 from pybullet_utils import pd_controller_stable
 from deep_mimic.env import humanoid_pose_interpolator_upper_hands
-from deep_mimic.env.humanoid_stable_pd_multiclip import HumanoidStablePDMultiClip
 import math
 import numpy as np
 
@@ -27,27 +26,27 @@ rightRingDistal = 20
 rightPinkyProximal = 21
 rightPinkyIntermediate = 22
 rightPinkyDistal = 23
-leftHip = 25
-leftKnee = 26
-leftAnkle = 27
-leftShoulder = 28
-leftElbow = 29
-leftWrist = 30
-leftThumbProximal = 31
-leftThumbIntermediate = 32
-leftThumbDistal = 33
-leftIndexProximal = 34
-leftIndexIntermediate = 35
-leftIndexDistal = 36
-leftMiddleProximal = 37
-leftMiddleIntermediate = 38
-leftMiddleDistal = 39
-leftRingProximal = 40
-leftRingIntermediate = 41
-leftRingDistal = 42
-leftPinkyProximal = 43
-leftPinkyIntermediate = 44
-leftPinkyDistal = 45
+leftHip = 24
+leftKnee = 25
+leftAnkle = 26
+leftShoulder = 27
+leftElbow = 28
+leftWrist = 29
+leftThumbProximal = 30
+leftThumbIntermediate = 31
+leftThumbDistal = 32
+leftIndexProximal = 33
+leftIndexIntermediate = 34
+leftIndexDistal = 35
+leftMiddleProximal = 36
+leftMiddleIntermediate = 37
+leftMiddleDistal = 38
+leftRingProximal = 39
+leftRingIntermediate = 40
+leftRingDistal = 41
+leftPinkyProximal = 42
+leftPinkyIntermediate = 43
+leftPinkyDistal = 44
 
 jointFrictionForce = 0
 
@@ -55,7 +54,7 @@ jointFrictionForce = 0
 class HumanoidStablePDWholeUpper(object):
 
     def __init__(self, pybullet_client, mocap_data, timeStep,
-                 useFixedBase=True, arg_parser=None, useComReward=False):
+                 useFixedBase=True, arg_parser=None, useComReward=False, kp=None, kd=None):
         self._pybullet_client = pybullet_client
         self._mocap_data = mocap_data
         self._arg_parser = arg_parser
@@ -114,7 +113,7 @@ class HumanoidStablePDWholeUpper(object):
 
         self._poseInterpolator = humanoid_pose_interpolator_upper_hands.WholeHumanoidPoseInterpolator()
 
-        for i in range(self._mocap_data.NumFrames() - 1):
+        for i in range(self._mocap_data.getNumFrames() - 1):
             frameData = self._mocap_data._motion_data['Frames'][i]
 
         self._stablePD = pd_controller_stable.PDControllerStableMultiDof(self._pybullet_client)
@@ -124,33 +123,31 @@ class HumanoidStablePDWholeUpper(object):
             0, 0, 0, 0,
             1000, 1000, 1000, 1000,
             100, 100, 100, 100,
+            500, 500, 500, 500,
             500,
-            500, 500, 500, 500,
             400, 400, 400, 400,
             400, 400, 400, 400,
-            300,
-            500, 500, 500, 500,
+            300] + [0] * 16 + [500, 500, 500, 500,
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
             300
-        ]
+        ] + [0] * 16
         self._kdOrg = [
             0, 0, 0,
             0, 0, 0, 0,
             100, 100, 100, 100,
             10, 10, 10, 10,
+            50, 50, 50, 50,
             50,
-            50, 50, 50, 50,
             40, 40, 40, 40,
             40, 40, 40, 40,
-            30,
-            50, 50, 50, 50,
+            30] + [0] * 16 + [50, 50, 50, 50,
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
             30
-        ]
+        ] + [0] * 16
 
         self._jointIndicesAll = [
             chest, neck, rightHip, rightKnee, rightAnkle, rightShoulder, rightElbow,
@@ -203,7 +200,7 @@ class HumanoidStablePDWholeUpper(object):
                 velocityGain=1,
                 force=[jointFrictionForce, jointFrictionForce, 0])
 
-        self._jointDofCounts = [4, 4, 4, 1, 4, 4, 1, 4, 1, 4, 4, 1]
+        self._jointDofCounts = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
 
         # only those body parts/links are allowed to touch the ground, otherwise the episode terminates
         fall_contact_bodies = []
@@ -254,35 +251,35 @@ class HumanoidStablePDWholeUpper(object):
             jointPositions = [
                 pose._chestRot, pose._neckRot, pose._rightHipRot, pose._rightKneeRot,
                 pose._rightAnkleRot, pose._rightShoulderRot, pose._rightElbowRot, pose._rightWristRot,
-                pose._rightThumbProx, pose._rightThumbInt, pose._rightThumbDist,
-                pose._rightIndexProx, pose._rightIndexInt, pose._rightIndexDist,
-                pose._rightMiddleProx, pose._rightMiddleInt, pose._rightMiddleDist,
-                pose._rightRingProx, pose._rightRingInt, pose._rightRingDist,
-                pose._rightPinkieProx, pose._rightPinkieInt, pose._rightPinkieDist,
+                pose._rightThumbProx, pose._rightThumbInter, pose._rightThumbDist,
+                pose._rightIndexProx, pose._rightIndexInter, pose._rightIndexDist,
+                pose._rightMiddleProx, pose._rightMiddleInter, pose._rightMiddleDist,
+                pose._rightRingProx, pose._rightRingInter, pose._rightRingDist,
+                pose._rightPinkieProx, pose._rightPinkieInter, pose._rightPinkieDist,
                 pose._leftHipRot,
                 pose._leftKneeRot, pose._leftAnkleRot, pose._leftShoulderRot, pose._leftElbowRot, pose._leftWristRot,
-                pose._leftThumbProx, pose._leftThumbInt, pose._leftThumbDist,
-                pose._leftIndexProx, pose._leftIndexInt, pose._leftIndexDist,
-                pose._leftMiddleProx, pose._leftMiddleInt, pose._leftMiddleDist,
-                pose._leftRingProx, pose._leftRingInt, pose._leftRingDist,
-                pose._leftPinkieProx, pose._leftPinkieInt, pose._leftPinkieDist
+                pose._leftThumbProx, pose._leftThumbInter, pose._leftThumbDist,
+                pose._leftIndexProx, pose._leftIndexInter, pose._leftIndexDist,
+                pose._leftMiddleProx, pose._leftMiddleInter, pose._leftMiddleDist,
+                pose._leftRingProx, pose._leftRingInter, pose._leftRingDist,
+                pose._leftPinkieProx, pose._leftPinkieInter, pose._leftPinkieDist
             ]
 
             jointVelocities = [
                 pose._chestVel, pose._neckVel, pose._rightHipVel, pose._rightKneeVel,
                 pose._rightAnkleVel, pose._rightShoulderVel, pose._rightElbowVel, pose._rightWristVel,
-                pose._rightThumbProxVel, pose._rightThumbIntVel, pose._rightThumbDistVel,
-                pose._rightIndexProxVel, pose._rightIndexIntVel, pose._rightIndexDistVel,
-                pose._rightMiddleProxVel, pose._rightMiddleIntVel, pose._rightMiddleDistVel,
-                pose._rightRingProxVel, pose._rightRingIntVel, pose._rightRingDistVel,
-                pose._rightPinkieProxVel, pose._rightPinkieIntVel, pose._rightPinkieDistVel,
+                pose._rightThumbProxVel, pose._rightThumbInterVel, pose._rightThumbDistVel,
+                pose._rightIndexProxVel, pose._rightIndexInterVel, pose._rightIndexDistVel,
+                pose._rightMiddleProxVel, pose._rightMiddleInterVel, pose._rightMiddleDistVel,
+                pose._rightRingProxVel, pose._rightRingInterVel, pose._rightRingDistVel,
+                pose._rightPinkieProxVel, pose._rightPinkieInterVel, pose._rightPinkieDistVel,
                 pose._leftHipVel, pose._leftKneeVel, pose._leftAnkleVel, pose._leftShoulderVel,
                 pose._leftElbowVel, pose._leftWristVel,
-                pose._leftThumbProxVel, pose._leftThumbIntVel, pose._leftThumbDistVel,
-                pose._leftIndexProxVel, pose._leftIndexIntVel, pose._leftIndexDistVel,
-                pose._leftMiddleProxVel, pose._leftMiddleIntVel, pose._leftMiddleDistVel,
-                pose._leftRingProxVel, pose._leftRingIntVel, pose._leftRingDistVel,
-                pose._leftPinkieProxVel, pose._leftPinkieIntVel, pose._leftPinkieDistVel
+                pose._leftThumbProxVel, pose._leftThumbInterVel, pose._leftThumbDistVel,
+                pose._leftIndexProxVel, pose._leftIndexInterVel, pose._leftIndexDistVel,
+                pose._leftMiddleProxVel, pose._leftMiddleInterVel, pose._leftMiddleDistVel,
+                pose._leftRingProxVel, pose._leftRingInterVel, pose._leftRingDistVel,
+                pose._leftPinkieProxVel, pose._leftPinkieInterVel, pose._leftPinkieDistVel
             ]
             self._pybullet_client.resetJointStatesMultiDof(phys_model, indices,
                                                            jointPositions, jointVelocities)
@@ -310,18 +307,18 @@ class HumanoidStablePDWholeUpper(object):
             jointPositions = [
                 pose._chestRot, pose._neckRot, pose._rightHipRot, pose._rightKneeRot,
                 pose._rightAnkleRot, pose._rightShoulderRot, pose._rightElbowRot, pose._rightWristRot,
-                pose._rightThumbProx, pose._rightThumbInt, pose._rightThumbDist,
-                pose._rightIndexProx, pose._rightIndexInt, pose._rightIndexDist,
-                pose._rightMiddleProx, pose._rightMiddleInt, pose._rightMiddleDist,
-                pose._rightRingProx, pose._rightRingInt, pose._rightRingDist,
-                pose._rightPinkieProx, pose._rightPinkieInt, pose._rightPinkieDist,
+                pose._rightThumbProx, pose._rightThumbInter, pose._rightThumbDist,
+                pose._rightIndexProx, pose._rightIndexInter, pose._rightIndexDist,
+                pose._rightMiddleProx, pose._rightMiddleInter, pose._rightMiddleDist,
+                pose._rightRingProx, pose._rightRingInter, pose._rightRingDist,
+                pose._rightPinkieProx, pose._rightPinkieInter, pose._rightPinkieDist,
                 pose._leftHipRot,
                 pose._leftKneeRot, pose._leftAnkleRot, pose._leftShoulderRot, pose._leftElbowRot, pose._leftWristRot,
-                pose._leftThumbProx, pose._leftThumbInt, pose._leftThumbDist,
-                pose._leftIndexProx, pose._leftIndexInt, pose._leftIndexDist,
-                pose._leftMiddleProx, pose._leftMiddleInt, pose._leftMiddleDist,
-                pose._leftRingProx, pose._leftRingInt, pose._leftRingDist,
-                pose._leftPinkieProx, pose._leftPinkieInt, pose._leftPinkieDist
+                pose._leftThumbProx, pose._leftThumbInter, pose._leftThumbDist,
+                pose._leftIndexProx, pose._leftIndexInter, pose._leftIndexDist,
+                pose._leftMiddleProx, pose._leftMiddleInter, pose._leftMiddleDist,
+                pose._leftRingProx, pose._leftRingInter, pose._leftRingDist,
+                pose._leftPinkieProx, pose._leftPinkieInter, pose._leftPinkieDist
             ]
             self._pybullet_client.resetJointStatesMultiDof(phys_model, indices, jointPositions)
 
@@ -333,8 +330,8 @@ class HumanoidStablePDWholeUpper(object):
         return count
 
     def getCycleTime(self):
-        keyFrameDuration = self._mocap_data.KeyFrameDuraction()
-        cycleTime = keyFrameDuration * (self._mocap_data.NumFrames() - 1)
+        keyFrameDuration = self._mocap_data.getKeyFrameDuration()
+        cycleTime = keyFrameDuration * (self._mocap_data.getNumFrames() - 1)
         return cycleTime
 
     def setSimTime(self, t):
@@ -359,7 +356,7 @@ class HumanoidStablePDWholeUpper(object):
 
     def computeCycleOffset(self):
         firstFrame = 0
-        lastFrame = self._mocap_data.NumFrames() - 1
+        lastFrame = self._mocap_data.getNumFrames() - 1
         frameData = self._mocap_data._motion_data['Frames'][0]
         frameDataNext = self._mocap_data._motion_data['Frames'][lastFrame]
 
@@ -407,6 +404,7 @@ class HumanoidStablePDWholeUpper(object):
             indices.append(jointIndex)
             kps.append(self._kpOrg[dofIndex])
             kds.append(self._kdOrg[dofIndex])
+
             if self._jointDofCounts[index] == 4:
                 force = [
                     scaling * maxForces[dofIndex + 0],
@@ -441,8 +439,8 @@ class HumanoidStablePDWholeUpper(object):
 
 
     def getPhase(self):
-        keyFrameDuration = self._mocap_data.KeyFrameDuraction()
-        cycleTime = keyFrameDuration * (self._mocap_data.NumFrames() - 1)
+        keyFrameDuration = self._mocap_data.getKeyFrameDuration()
+        cycleTime = keyFrameDuration * (self._mocap_data.getNumFrames() - 1)
         phase = self._simTime / cycleTime
         phase = math.fmod(phase, 1.0)
         if (phase < 0):
@@ -498,7 +496,7 @@ class HumanoidStablePDWholeUpper(object):
 
         stateVector.append(rootPosRel[1])
 
-        self.pb2dmJoints = range(46)
+        self.pb2dmJoints = range(45)
 
         linkIndicesSim = []
         for pbJoint in range(self._pybullet_client.getNumJoints(self._sim_model)):
@@ -509,8 +507,7 @@ class HumanoidStablePDWholeUpper(object):
 
         for pbJoint in range(self._pybullet_client.getNumJoints(self._sim_model)):
             j = self.pb2dmJoints[pbJoint]
-            # print("joint order:",j)
-            # ls = self._pybullet_client.getLinkState(self._sim_model, j, computeForwardKinematics=True)
+
             ls = linkStatesSim[pbJoint]
             linkPos = ls[0]
             linkOrn = ls[1]
@@ -642,7 +639,7 @@ class HumanoidStablePDWholeUpper(object):
         root_id = 0
 
         num_end_effs = 0
-        num_joints = 46
+        num_joints = 45
 
         mJointWeights = [1] * num_joints
 
@@ -722,32 +719,18 @@ class HumanoidStablePDWholeUpper(object):
         if (num_end_effs > 0):
             end_eff_err /= num_end_effs
 
-        # double root_ground_h0 = mGround->SampleHeight(sim_char.GetRootPos())
-        # double root_ground_h1 = kin_char.GetOriginPos()[1]
-        # root_pos0[1] -= root_ground_h0
-        # root_pos1[1] -= root_ground_h1
         root_pos_diff = [
             rootPosSim[0] - rootPosKin[0], rootPosSim[1] - rootPosKin[1], rootPosSim[2] - rootPosKin[2]
         ]
         root_pos_err = root_pos_diff[0] * root_pos_diff[0] + root_pos_diff[1] * root_pos_diff[
             1] + root_pos_diff[2] * root_pos_diff[2]
-        #
-        # root_rot_err = cMathUtil::QuatDiffTheta(root_rot0, root_rot1)
-        # root_rot_err *= root_rot_err
-
-        # root_vel_err = (root_vel1 - root_vel0).squaredNorm()
-        # root_ang_vel_err = (root_ang_vel1 - root_ang_vel0).squaredNorm()
 
         root_err = root_pos_err + 0.1 * root_rot_err + 0.01 * root_vel_err + 0.001 * root_ang_vel_err
 
-        # COM error in initial code -> COM velocities
+
         if self._useComReward:
             com_err = 0.1 * np.sum(np.square(comKinVel - comSimVel))
-        # com_err = 0.1 * np.sum(np.square(comKin - comSim))
-        # com_err = 0.1 * (com_vel1_world - com_vel0_world).squaredNorm()
 
-        # print("pose_err=",pose_err)
-        # print("vel_err=",vel_err)
         pose_reward = math.exp(-err_scale * pose_scale * pose_err)
         vel_reward = math.exp(-err_scale * vel_scale * vel_err)
         end_eff_reward = math.exp(-err_scale * end_eff_scale * end_eff_err)
@@ -784,7 +767,7 @@ class HumanoidStablePDWholeUpper(object):
     def computeCOMposVel(self, uid: int):
         """Compute center-of-mass position and velocity."""
         pb = self._pybullet_client
-        num_joints = 46
+        num_joints = 45
         jointIndices = range(num_joints)
         link_states = pb.getLinkStates(uid, jointIndices, computeLinkVelocity=1)
         link_pos = np.array([s[0] for s in link_states])
@@ -799,3 +782,186 @@ class HumanoidStablePDWholeUpper(object):
         com_pos = np.sum(masses * link_pos, axis=0) / tot_mass
         com_vel = np.sum(masses * link_vel, axis=0) / tot_mass
         return com_pos, com_vel
+
+
+def tune_controller(args):
+    import pybullet as p1
+    from pybullet_utils import bullet_client
+    import data as pybullet_data
+    from pybullet_utils.arg_parser import ArgParser
+    from deep_mimic.env.pybullet_deep_mimic_env_hand import InitializationStrategy
+    from deep_mimic.env import motion_capture_data
+    import time
+    import wandb
+
+    wandb.init(config=args)
+    args = wandb.config
+
+    arg_file = "run_humanoid3d_tuning_motion_whole_args.txt"
+    arg_parser = ArgParser()
+    path = pybullet_data.getDataPath() + "/args/" + arg_file
+    succ = arg_parser.load_file(path)
+    timeStep = 1. / 240
+    _init_strategy = InitializationStrategy.START
+    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
+    # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
+    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
+    _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
+    z2y = _pybullet_client.getQuaternionFromEuler([-math.pi * 0.5, 0, 0])
+    _planeId = _pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0],
+                                           z2y,
+                                           useMaximalCoordinates=True)
+    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_Y_AXIS_UP, 1)
+    _pybullet_client.setGravity(0, -9.8, 0)
+    _pybullet_client.setPhysicsEngineParameter(numSolverIterations=10)
+    _mocapData = motion_capture_data.MotionCaptureData()
+    motion_file = arg_parser.parse_strings('motion_file')
+    print(motion_file)
+    print("motion_file=", motion_file[0])
+    motionPath = pybullet_data.getDataPath() + "/" + motion_file[0]
+    print(motionPath)
+    _mocapData.Load(motionPath)
+    timeStep = timeStep
+    useFixedBase = False
+
+    _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser, kp=args.kp, kd=args.kd)
+
+    _isInitialized = True
+    _pybullet_client.setTimeStep(timeStep)
+    _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
+
+    startTime = 0
+
+    t = startTime
+    _humanoid.setSimTime(startTime)
+    _humanoid.resetPose()
+    # this clears the contact points. Todo: add API to explicitly clear all contact points?
+
+    # _pybullet_client.stepSimulation()
+    _humanoid.resetPose()
+
+    needs_update_time = t - 1  # force update
+
+    import time
+
+    n_joints = _pybullet_client.getNumJoints(_humanoid._sim_model)
+
+    cycle = _mocapData.getCycleTime()
+
+    action = _mocapData._motion_data['Frames'][_humanoid._frameNext]
+    _humanoid.convertActionToPose(action[7:])
+
+    kin_joint = []
+    sim_joint = []
+    kin_vel = []
+    sim_vel = []
+    rewards = []
+    steps = range(900)
+    print(len(_mocapData._motion_data['Frames']))
+
+    for i in steps:
+        # print(_humanoid._frameNext)
+        action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
+        desired_pose = _humanoid.convertActionToPose(action[7:])
+        desired_pose[:7] = [0] * 7
+
+        for i in range(240//240):
+            _pybullet_client.setTimeStep(timeStep)
+            _humanoid._timeStep = timeStep
+            t += timeStep
+            _humanoid.setSimTime(t)
+            kinPose = _humanoid.computePose(_humanoid._frameFraction)
+
+            _humanoid.getReward(kinPose)
+            rewards.append(_humanoid._info_err)
+            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+            maxForces = [
+                0, 0, 0,
+                0, 0, 0, 0,
+                200, 200, 200, 200,
+                50, 50, 50, 50,
+                200, 200, 200, 200,
+                150,
+                90, 90, 90, 90,
+                100, 100, 100, 100,
+                60] + [1] * 16 + [
+                200, 200, 200, 200,
+                150,
+                90, 90, 90, 90,
+                100, 100, 100, 100,
+                60
+            ] + [1] * 16
+
+            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+
+            _pybullet_client.stepSimulation()
+            time.sleep(1/240)
+
+        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
+        simPose = [s[0] for s in state]
+        simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
+        kinVelocities = _humanoid._poseInterpolator.GetVelocities()
+        simVelocities = [s[1] for s in state]
+
+        kin_joint.append(kinPose[7:][7])
+        sim_joint.append(simPose[7:][7])
+
+        kin_vel.append(kinVelocities[7])
+        sim_vel.append(simVelocities[7])
+
+
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(2)
+
+    ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
+    ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
+    ax[0].set_ylabel("rad")
+    ax[0].legend()
+    pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
+    # ax[0].plot(list(steps), pos_err, color="black")
+
+    # abs_pos_err = [p*p for p in pos_err]
+    ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
+    ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
+    ax[1].set_ylabel("rad/s")
+    ax[1].set_xlabel("steps")
+    ax[1].legend()
+
+    vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
+    # ax[1].plot(list(steps), vel_err, color="black")
+    #
+    # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    #
+    # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
+    # ax[2].set_ylabel("pose")
+    # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
+    # ax[3].set_ylabel("vel")
+    # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
+    # ax[4].set_ylabel("end_eff")
+    # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
+    # ax[5].set_ylabel("root")
+    #
+    plt.show()
+
+    log = {
+        "pose": sum([abs(v) for v in pos_err]),
+        "velocity": sum([abs(v) for v in vel_err]),
+        "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
+    }
+
+    wandb.log(log)
+
+    _pybullet_client.disconnect()
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--kp', type=float)
+    parser.add_argument('--kd', type=float)
+
+    args = parser.parse_args()
+    tune_controller(args)

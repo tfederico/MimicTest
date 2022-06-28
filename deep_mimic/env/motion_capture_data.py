@@ -14,15 +14,15 @@ class MotionCaptureData(object):
         with open(path, 'r') as f:
             self._motion_data = json.load(f)
 
-    def NumFrames(self):
+    def getNumFrames(self):
         return len(self._motion_data['Frames'])
 
-    def KeyFrameDuraction(self):
+    def getKeyFrameDuration(self):
         return self._motion_data['Frames'][0][0]
 
     def getCycleTime(self):
-        keyFrameDuration = self.KeyFrameDuraction()
-        cycleTime = keyFrameDuration * (self.NumFrames() - 1)
+        keyFrameDuration = self.getKeyFrameDuration()
+        cycleTime = keyFrameDuration * (self.getNumFrames() - 1)
         return cycleTime
 
     def calcCycleCount(self, simTime, cycleTime):
@@ -34,7 +34,7 @@ class MotionCaptureData(object):
 
     def computeCycleOffset(self):
         firstFrame = 0
-        lastFrame = self.NumFrames() - 1
+        lastFrame = self.getNumFrames() - 1
         frameData = self._motion_data['Frames'][0]
         frameDataNext = self._motion_data['Frames'][lastFrame]
 

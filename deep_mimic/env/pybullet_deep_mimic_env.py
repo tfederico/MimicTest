@@ -88,8 +88,8 @@ class PyBulletDeepMimicEnv(Env):
                         #self._humanoid.applyPDForces(taus)
                         #self._pybullet_client.stepSimulation()
                     time.sleep(timeStep)
-        #print("numframes = ", self._humanoid._mocap_data.NumFrames())
-        #startTime = random.randint(0,self._humanoid._mocap_data.NumFrames()-2)
+        #print("numframes = ", self._humanoid._mocap_data.getNumFrames())
+        #startTime = random.randint(0,self._humanoid._mocap_data.getNumFrames()-2)
 
         if self._init_strategy == InitializationStrategy.RANDOM:
             rnrange = 1000

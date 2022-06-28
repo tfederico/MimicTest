@@ -80,7 +80,7 @@ class HumanoidStablePD(object):
 
         self._poseInterpolator = humanoid_pose_interpolator.HumanoidPoseInterpolator()
 
-        for i in range(self._mocap_data.NumFrames() - 1):
+        for i in range(self._mocap_data.getNumFrames() - 1):
             frameData = self._mocap_data._motion_data['Frames'][i]
             self._poseInterpolator.PostProcessMotionData(frameData)
 
@@ -247,16 +247,16 @@ class HumanoidStablePD(object):
         return count
 
     def getCycleTime(self):
-        keyFrameDuration = self._mocap_data.KeyFrameDuraction()
-        cycleTime = keyFrameDuration * (self._mocap_data.NumFrames() - 1)
+        keyFrameDuration = self._mocap_data.getKeyFrameDuration()
+        cycleTime = keyFrameDuration * (self._mocap_data.getNumFrames() - 1)
         return cycleTime
 
     def setSimTime(self, t):
         self._simTime = t
         # print("SetTimeTime time =",t)
-        keyFrameDuration = self._mocap_data.KeyFrameDuraction()
+        keyFrameDuration = self._mocap_data.getKeyFrameDuration()
         cycleTime = self.getCycleTime()
-        # print("self._motion_data.NumFrames()=",self._mocap_data.NumFrames())
+        # print("self._motion_data.getNumFrames()=",self._mocap_data.getNumFrames())
         self._cycleCount = self.calcCycleCount(t, cycleTime)
         # print("cycles=",cycles)
         frameTime = t - self._cycleCount * cycleTime
@@ -269,14 +269,14 @@ class HumanoidStablePD(object):
         # print("self._frame=",self._frame)
 
         self._frameNext = self._frame + 1
-        if (self._frameNext >= self._mocap_data.NumFrames()):
+        if (self._frameNext >= self._mocap_data.getNumFrames()):
             self._frameNext = self._frame
 
         self._frameFraction = (frameTime - self._frame * keyFrameDuration) / (keyFrameDuration)
 
     def computeCycleOffset(self):
         firstFrame = 0
-        lastFrame = self._mocap_data.NumFrames() - 1
+        lastFrame = self._mocap_data.getNumFrames() - 1
         frameData = self._mocap_data._motion_data['Frames'][0]
         frameDataNext = self._mocap_data._motion_data['Frames'][lastFrame]
 
@@ -570,8 +570,8 @@ class HumanoidStablePD(object):
         # print("startIndex=",startIndex)
 
     def getPhase(self):
-        keyFrameDuration = self._mocap_data.KeyFrameDuraction()
-        cycleTime = keyFrameDuration * (self._mocap_data.NumFrames() - 1)
+        keyFrameDuration = self._mocap_data.getKeyFrameDuration()
+        cycleTime = keyFrameDuration * (self._mocap_data.getNumFrames() - 1)
         phase = self._simTime / cycleTime
         phase = math.fmod(phase, 1.0)
         if (phase < 0):

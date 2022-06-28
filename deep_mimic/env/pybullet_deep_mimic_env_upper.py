@@ -78,7 +78,7 @@ class PyBulletDeepMimicEnvUpper(PyBulletDeepMimicEnvSelector):
             self._pybullet_client.setTimeStep(timeStep)
             self._pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
 
-        # print("numframes = ", self._humanoid._mocap_data.NumFrames())
+        # print("numframes = ", self._humanoid._mocap_data.getNumFrames())
 
         if self._init_strategy == InitializationStrategy.RANDOM:
             rnrange = 1000
