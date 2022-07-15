@@ -20,39 +20,21 @@ class WholeHumanoidPoseInterpolator(object):
                 rightThumbProx=[0],
                 rightThumbInter=[0],
                 rightThumbDist=[0],
-                rightIndexProx=[0],
-                rightIndexInter=[0],
-                rightIndexDist=[0],
-                rightMiddleProx=[0],
-                rightMiddleInter=[0],
-                rightMiddleDist=[0],
-                rightRingProx=[0],
-                rightRingInter=[0],
-                rightRingDist=[0],
-                rightPinkieProx=[0],
-                rightPinkieInter=[0],
-                rightPinkieDist=[0],
+                rightIndexProx=[0], rightIndexInter=[0], rightIndexDist=[0],
+                rightMiddleProx=[0], rightMiddleInter=[0], rightMiddleDist=[0],
+                rightRingProx=[0], rightRingInter=[0], rightRingDist=[0],
+                rightPinkieProx=[0], rightPinkieInter=[0], rightPinkieDist=[0],
                 leftHipRot=[0, 0, 0, 1],
                 leftKneeRot=[0],
                 leftAnkleRot=[0, 0, 0, 1],
                 leftShoulderRot=[0, 0, 0, 1],
                 leftElbowRot=[0],
                 leftWristRot=[0],
-                leftThumbProx=[0],
-                leftThumbInter=[0],
-                leftThumbDist=[0],
-                leftIndexProx=[0],
-                leftIndexInter=[0],
-                leftIndexDist=[0],
-                leftMiddleProx=[0],
-                leftMiddleInter=[0],
-                leftMiddleDist=[0],
-                leftRingProx=[0],
-                leftRingInter=[0],
-                leftRingDist=[0],
-                leftPinkieProx=[0],
-                leftPinkieInter=[0],
-                leftPinkieDist=[0],
+                leftThumbProx=[0], leftThumbInter=[0], leftThumbDist=[0],
+                leftIndexProx=[0], leftIndexInter=[0], leftIndexDist=[0],
+                leftMiddleProx=[0], leftMiddleInter=[0], leftMiddleDist=[0],
+                leftRingProx=[0], leftRingInter=[0], leftRingDist=[0],
+                leftPinkieProx=[0], leftPinkieInter=[0], leftPinkieDist=[0],
                 baseLinVel=[0, 0, 0],
                 baseAngVel=[0, 0, 0],
                 chestVel=[0, 0, 0],
@@ -63,42 +45,22 @@ class WholeHumanoidPoseInterpolator(object):
                 rightShoulderVel=[0, 0, 0],
                 rightElbowVel=[0],
                 rightWristVel=[0],
-                rightThumbProxVel=[0],
-                rightThumbInterVel=[0],
-                rightThumbDistVel=[0],
-                rightIndexProxVel=[0],
-                rightIndexInterVel=[0],
-                rightIndexDistVel=[0],
-                rightMiddleProxVel=[0],
-                rightMiddleInterVel=[0],
-                rightMiddleDistVel=[0],
-                rightRingProxVel=[0],
-                rightRingInterVel=[0],
-                rightRingDistVel=[0],
-                rightPinkieProxVel=[0],
-                rightPinkieInterVel=[0],
-                rightPinkieDistVel=[0],
+                rightThumbProxVel=[0], rightThumbInterVel=[0], rightThumbDistVel=[0],
+                rightIndexProxVel=[0], rightIndexInterVel=[0], rightIndexDistVel=[0],
+                rightMiddleProxVel=[0], rightMiddleInterVel=[0], rightMiddleDistVel=[0],
+                rightRingProxVel=[0], rightRingInterVel=[0], rightRingDistVel=[0],
+                rightPinkieProxVel=[0], rightPinkieInterVel=[0], rightPinkieDistVel=[0],
                 leftHipVel=[0, 0, 0],
                 leftKneeVel=[0],
                 leftAnkleVel=[0, 0, 0],
                 leftShoulderVel=[0, 0, 0],
                 leftElbowVel=[0],
                 leftWristVel=[0],
-                leftThumbProxVel=[0],
-                leftThumbInterVel=[0],
-                leftThumbDistVel=[0],
-                leftIndexProxVel=[0],
-                leftIndexInterVel=[0],
-                leftIndexDistVel=[0],
-                leftMiddleProxVel=[0],
-                leftMiddleInterVel=[0],
-                leftMiddleDistVel=[0],
-                leftRingProxVel=[0],
-                leftRingInterVel=[0],
-                leftRingDistVel=[0],
-                leftPinkieProxVel=[0],
-                leftPinkieInterVel=[0],
-                leftPinkieDistVel=[0]
+                leftThumbProxVel=[0], leftThumbInterVel=[0], leftThumbDistVel=[0],
+                leftIndexProxVel=[0], leftIndexInterVel=[0], leftIndexDistVel=[0],
+                leftMiddleProxVel=[0], leftMiddleInterVel=[0], leftMiddleDistVel=[0],
+                leftRingProxVel=[0], leftRingInterVel=[0], leftRingDistVel=[0],
+                leftPinkieProxVel=[0], leftPinkieInterVel=[0], leftPinkieDistVel=[0]
               ):
 
         self._basePos = basePos
@@ -111,36 +73,18 @@ class WholeHumanoidPoseInterpolator(object):
         self._chestVel = chestVel
         self._neckRot = neckRot
         self._neckVel = neckVel
-
         self._rightHipRot = rightHipRot
         self._rightHipVel = rightHipVel
         self._rightKneeRot = rightKneeRot
         self._rightKneeVel = rightKneeVel
         self._rightAnkleRot = rightAnkleRot
         self._rightAnkleVel = rightAnkleVel
-
         self._rightShoulderRot = rightShoulderRot
         self._rightShoulderVel = rightShoulderVel
         self._rightElbowRot = rightElbowRot
         self._rightElbowVel = rightElbowVel
         self._rightWristRot = rightWristRot
         self._rightWristVel = rightWristVel
-
-
-        self._leftHipRot = leftHipRot
-        self._leftHipVel = leftHipVel
-        self._leftKneeRot = leftKneeRot
-        self._leftKneeVel = leftKneeVel
-        self._leftAnkleRot = leftAnkleRot
-        self._leftAnkleVel = leftAnkleVel
-
-        self._leftShoulderRot = leftShoulderRot
-        self._leftShoulderVel = leftShoulderVel
-        self._leftElbowRot = leftElbowRot
-        self._leftElbowVel = leftElbowVel
-        self._leftWristRot = leftWristRot
-        self._leftWristVel = leftWristVel
-
         self._rightThumbProx = rightThumbProx
         self._rightThumbInter = rightThumbInter
         self._rightThumbDist = rightThumbDist
@@ -156,7 +100,18 @@ class WholeHumanoidPoseInterpolator(object):
         self._rightPinkieProx = rightPinkieProx
         self._rightPinkieInter = rightPinkieInter
         self._rightPinkieDist = rightPinkieDist
-
+        self._leftHipRot = leftHipRot
+        self._leftHipVel = leftHipVel
+        self._leftKneeRot = leftKneeRot
+        self._leftKneeVel = leftKneeVel
+        self._leftAnkleRot = leftAnkleRot
+        self._leftAnkleVel = leftAnkleVel
+        self._leftShoulderRot = leftShoulderRot
+        self._leftShoulderVel = leftShoulderVel
+        self._leftElbowRot = leftElbowRot
+        self._leftElbowVel = leftElbowVel
+        self._leftWristRot = leftWristRot
+        self._leftWristVel = leftWristVel
         self._leftThumbProx = leftThumbProx
         self._leftThumbInter = leftThumbInter
         self._leftThumbDist = leftThumbDist
@@ -172,7 +127,6 @@ class WholeHumanoidPoseInterpolator(object):
         self._leftPinkieProx = leftPinkieProx
         self._leftPinkieInter = leftPinkieInter
         self._leftPinkieDist = leftPinkieDist
-
         self._rightThumbDistVel = rightThumbDistVel
         self._rightThumbInterVel = rightThumbInterVel
         self._rightThumbProxVel = rightThumbProxVel
@@ -238,32 +192,35 @@ class WholeHumanoidPoseInterpolator(object):
             orn[3] /= length
             return orn
 
-        #print("Normalize? length=",length)
 
     def GetPose(self):
         pose = [
-            self._basePos[0], self._basePos[1], self._basePos[2], self._baseOrn[0], self._baseOrn[1],
-            self._baseOrn[2], self._baseOrn[3], self._chestRot[0], self._chestRot[1],
-            self._chestRot[2], self._chestRot[3], self._neckRot[0], self._neckRot[1], self._neckRot[2],
-            self._neckRot[3], self._rightHipRot[0], self._rightHipRot[1], self._rightHipRot[2],
-            self._rightHipRot[3], self._rightKneeRot[0], self._rightAnkleRot[0],
-            self._rightAnkleRot[1], self._rightAnkleRot[2], self._rightAnkleRot[3],
-            self._rightShoulderRot[0], self._rightShoulderRot[1], self._rightShoulderRot[2],
-            self._rightShoulderRot[3], self._rightElbowRot[0], self._rightWristRot[0],
-            self._rightThumbProx[0], self._rightThumbInter[0], self._rightThumbDist[0],
-            self._rightIndexProx[0], self._rightIndexInter[0], self._rightIndexDist[0],
-            self._rightMiddleProx[0], self._rightMiddleInter[0], self._rightMiddleDist[0],
-            self._rightRingProx[0], self._rightRingInter[0], self._rightRingDist[0],
-            self._rightPinkieProx[0], self._rightPinkieInter[0], self._rightPinkieDist[0],
-            self._leftHipRot[0], self._leftHipRot[1], self._leftHipRot[2], self._leftHipRot[3], self._leftKneeRot[0],
-            self._leftAnkleRot[0], self._leftAnkleRot[1], self._leftAnkleRot[2], self._leftAnkleRot[3],
-            self._leftShoulderRot[0], self._leftShoulderRot[1], self._leftShoulderRot[2],
-            self._leftShoulderRot[3], self._leftElbowRot[0], self._leftWristRot[0],
-            self._leftThumbProx[0], self._leftThumbInter[0], self._leftThumbDist[0],
-            self._leftIndexProx[0], self._leftIndexInter[0], self._leftIndexDist[0],
-            self._leftMiddleProx[0], self._leftMiddleInter[0], self._leftMiddleDist[0],
-            self._leftRingProx[0], self._leftRingInter[0], self._leftRingDist[0],
-            self._leftPinkieProx[0], self._leftPinkieInter[0], self._leftPinkieDist[0]
+            *self._basePos,
+            *self._baseOrn,
+            *self._chestRot,
+            *self._neckRot,
+            *self._rightHipRot,
+            *self._rightKneeRot,
+            *self._rightAnkleRot,
+            *self._rightShoulderRot,
+            *self._rightElbowRot,
+            *self._rightWristRot,
+            *self._rightThumbProx, *self._rightThumbInter, *self._rightThumbDist,
+            *self._rightIndexProx, *self._rightIndexInter, *self._rightIndexDist,
+            *self._rightMiddleProx, *self._rightMiddleInter, *self._rightMiddleDist,
+            *self._rightRingProx, *self._rightRingInter, *self._rightRingDist,
+            *self._rightPinkieProx, *self._rightPinkieInter, *self._rightPinkieDist,
+            *self._leftHipRot,
+            *self._leftKneeRot,
+            *self._leftAnkleRot,
+            *self._leftShoulderRot,
+            *self._leftElbowRot,
+            *self._leftWristRot,
+            *self._leftThumbProx, *self._leftThumbInter, *self._leftThumbDist,
+            *self._leftIndexProx, *self._leftIndexInter, *self._leftIndexDist,
+            *self._leftMiddleProx, *self._leftMiddleInter, *self._leftMiddleDist,
+            *self._leftRingProx, *self._leftRingInter, *self._leftRingDist,
+            *self._leftPinkieProx, *self._leftPinkieInter, *self._leftPinkieDist
         ]
         return pose
 
@@ -300,11 +257,6 @@ class WholeHumanoidPoseInterpolator(object):
         self._baseOrn = bullet_client.getQuaternionSlerp(baseOrn1Start, baseOrn1Next, frameFraction)
         self._baseAngVel = self.ComputeAngVel(baseOrn1Start, baseOrn1Next, keyFrameDuration,
                                               bullet_client)
-
-        ##pre-rotate to make z-up
-        #y2zPos=[0,0,0.0]
-        #y2zOrn = p.getQuaternionFromEuler([1.57,0,0])
-        #basePos,baseOrn = p.multiplyTransforms(y2zPos, y2zOrn,basePos1,baseOrn1)
 
         chestRotStart = [frameData[9], frameData[10], frameData[11], frameData[8]]
         chestRotEnd = [frameDataNext[9], frameDataNext[10], frameDataNext[11], frameDataNext[8]]
@@ -628,26 +580,25 @@ class WholeHumanoidPoseInterpolator(object):
         axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
         self._chestRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
-        # print("pose._chestRot=",pose._chestRot)
 
         angle = action[index]
         axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
         self._neckRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
 
-        """angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
+        # angle = action[index]
+        # axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
-        self._rightHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
-
-        angle = action[index]
+        # self._rightHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        #
+        # angle = action[index]
         index += 1
-        self._rightKneeRot = [angle]
-
-        angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
+        # self._rightKneeRot = [angle]
+        #
+        # angle = action[index]
+        # axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
-        self._rightAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)"""
+        # self._rightAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         self._rightHipRot = [0, 0, 0, 1]
         self._rightKneeRot = [0]
         self._rightAnkleRot = [0, 0, 0, 1]
@@ -725,19 +676,19 @@ class WholeHumanoidPoseInterpolator(object):
         index += 1
         self._rightPinkieDist = [angle]
 
-        """angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
+        # angle = action[index]
+        # axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
-        self._leftHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
-
-        angle = action[index]
+        # self._leftHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
+        #
+        # angle = action[index]
         index += 1
-        self._leftKneeRot = [angle]
-
-        angle = action[index]
-        axis = [action[index + 1], action[index + 2], action[index + 3]]
+        # self._leftKneeRot = [angle]
+        #
+        # angle = action[index]
+        # axis = [action[index + 1], action[index + 2], action[index + 3]]
         index += 4
-        self._leftAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)"""
+        # self._leftAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         self._leftHipRot = [0, 0, 0, 1]
         self._leftKneeRot = [0]
         self._leftAnkleRot = [0, 0, 0, 1]

@@ -991,3 +991,186 @@ class HumanoidStablePD(object):
         com_pos = np.sum(masses * link_pos, axis=0) / tot_mass
         com_vel = np.sum(masses * link_vel, axis=0) / tot_mass
         return com_pos, com_vel
+
+
+
+def tune_controller(args):
+    import pybullet as p1
+    from pybullet_utils import bullet_client
+    import data as pybullet_data
+    from pybullet_utils.arg_parser import ArgParser
+    from deep_mimic.env.pybullet_deep_mimic_env_hand import InitializationStrategy
+    from deep_mimic.env import motion_capture_data
+    import time
+    import wandb
+
+    wandb.init(config=args)
+    args = wandb.config
+
+    arg_file = "run_humanoid3d_tuning_motion_body_args.txt"
+    arg_parser = ArgParser()
+    path = pybullet_data.getDataPath() + "/args/" + arg_file
+    succ = arg_parser.load_file(path)
+    timeStep = 1. / 240
+    _init_strategy = InitializationStrategy.START
+    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
+    # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
+    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
+    _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
+    z2y = _pybullet_client.getQuaternionFromEuler([-math.pi * 0.5, 0, 0])
+    _planeId = _pybullet_client.loadURDF("plane_implicit.urdf", [0, 0, 0],
+                                           z2y,
+                                           useMaximalCoordinates=True)
+    _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_Y_AXIS_UP, 1)
+    _pybullet_client.setGravity(0, -9.8, 0)
+    _pybullet_client.setPhysicsEngineParameter(numSolverIterations=10)
+    _mocapData = motion_capture_data.MotionCaptureData()
+    motion_file = arg_parser.parse_strings('motion_file')
+    print(motion_file)
+    print("motion_file=", motion_file[0])
+    motionPath = pybullet_data.getDataPath() + "/" + motion_file[0]
+    print(motionPath)
+    _mocapData.Load(motionPath)
+    timeStep = timeStep
+    useFixedBase = False
+
+    _humanoid = HumanoidStablePD(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser)
+
+    _pybullet_client.setTimeStep(timeStep)
+    _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
+
+    startTime = 0
+
+    t = startTime
+    _humanoid.setSimTime(startTime)
+    _humanoid.resetPose()
+    # this clears the contact points. Todo: add API to explicitly clear all contact points?
+
+    # _pybullet_client.stepSimulation()
+    _humanoid.resetPose()
+
+    needs_update_time = t - 1  # force update
+
+    import time
+
+    n_joints = _pybullet_client.getNumJoints(_humanoid._sim_model)
+
+    cycle = _mocapData.getCycleTime()
+
+    action = _mocapData._motion_data['Frames'][_humanoid._frameNext]
+    _humanoid.convertActionToPose(action[7:])
+
+    kin_joint = []
+    sim_joint = []
+    kin_vel = []
+    sim_vel = []
+    rewards = []
+    steps = range(5000)
+
+    for i in steps:
+        # print(_humanoid._frameNext)
+        action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
+        desired_pose = _humanoid.convertActionToPose(action[7:])
+        desired_pose[:7] = [0] * 7
+
+        for i in range(240//240):
+            _pybullet_client.setTimeStep(timeStep)
+            _humanoid._timeStep = timeStep
+            t += timeStep
+            _humanoid.setSimTime(t)
+            kinPose = _humanoid.computePose(_humanoid._frameFraction)
+
+            _humanoid.getReward(kinPose)
+            rewards.append(_humanoid._info_err)
+            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+
+            maxForces = [
+                0, 0, 0,
+                0, 0, 0, 0,
+                200, 200, 200, 200,
+                50, 50, 50, 50,
+                200, 200, 200, 200,
+                150,
+                90, 90, 90, 90,
+                100, 100, 100, 100,
+                60,
+                200, 200, 200, 200,
+                150,
+                90, 90, 90, 90,
+                100, 100, 100, 100,
+                60
+            ]
+
+            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+
+            _pybullet_client.stepSimulation()
+            time.sleep(1/240)
+
+        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(15)))
+        simPose = [s[0] for s in state]
+        simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
+        # kinVelocities = _humanoid._poseInterpolator.GetVelocities()
+        # simVelocities = [s[1] for s in state]
+
+        kin_joint.append(kinPose[7:][7])
+        sim_joint.append(simPose[7:][7])
+
+        # kin_vel.append(kinVelocities[7])
+        # sim_vel.append(simVelocities[7])
+
+
+
+    # import matplotlib.pyplot as plt
+    #
+    # fig, ax = plt.subplots(2)
+    #
+    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
+    # ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
+    # ax[0].set_ylabel("rad")
+    # ax[0].legend()
+    # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
+    # # ax[0].plot(list(steps), pos_err, color="black")
+    #
+    # # abs_pos_err = [p*p for p in pos_err]
+    # ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
+    # ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
+    # ax[1].set_ylabel("rad/s")
+    # ax[1].set_xlabel("steps")
+    # ax[1].legend()
+    #
+    # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
+    # # ax[1].plot(list(steps), vel_err, color="black")
+    # #
+    # # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    # #
+    # # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
+    # # ax[2].set_ylabel("pose")
+    # # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
+    # # ax[3].set_ylabel("vel")
+    # # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
+    # # ax[4].set_ylabel("end_eff")
+    # # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
+    # # ax[5].set_ylabel("root")
+    # #
+    # plt.show()
+    #
+    # log = {
+    #     "pose": sum([abs(v) for v in pos_err]),
+    #     "velocity": sum([abs(v) for v in vel_err]),
+    #     "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
+    # }
+    #
+    # wandb.log(log)
+
+    _pybullet_client.disconnect()
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--kp', type=float)
+    parser.add_argument('--kd', type=float)
+
+    args = parser.parse_args()
+    tune_controller(args)

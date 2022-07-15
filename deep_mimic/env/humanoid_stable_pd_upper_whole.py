@@ -1,5 +1,6 @@
+import torch
 from pybullet_utils import pd_controller_stable
-from deep_mimic.env import humanoid_pose_interpolator_upper_hands
+from deep_mimic.env import humanoid_pose_interpolator_upper_whole
 import math
 import numpy as np
 
@@ -70,7 +71,7 @@ class HumanoidStablePDWholeUpper(object):
         # for j in range (self._pybullet_client.getNumJoints(self._sim_model)):
         #  self._pybullet_client.setCollisionFilterGroupMask(self._sim_model,j,collisionFilterGroup=0,collisionFilterMask=0)
 
-        self._end_effectors = [5] + list(range(8, 24)) + [27] + list(range(30, 46))  # ankle and wrist, both left and right
+        self._end_effectors = [5] + list(range(8, 24)) + [26] + list(range(30, 46))  # ankle and wrist, both left and right
 
         self._kin_model = self._pybullet_client.loadURDF(
             "humanoid/whole_upper_humanoid.urdf", [0, 0.85, 0],
@@ -111,10 +112,10 @@ class HumanoidStablePDWholeUpper(object):
                                 self._pybullet_client.ACTIVATION_STATE_DISABLE_WAKEUP)
             self._pybullet_client.changeVisualShape(self._kin_model, j, rgbaColor=[1, 1, 1, alpha])
 
-        self._poseInterpolator = humanoid_pose_interpolator_upper_hands.WholeHumanoidPoseInterpolator()
+        self._poseInterpolator = humanoid_pose_interpolator_upper_whole.WholeHumanoidPoseInterpolator()
 
-        for i in range(self._mocap_data.getNumFrames() - 1):
-            frameData = self._mocap_data._motion_data['Frames'][i]
+        # for i in range(self._mocap_data.getNumFrames() - 1):
+        #     frameData = self._mocap_data._motion_data['Frames'][i]
 
         self._stablePD = pd_controller_stable.PDControllerStableMultiDof(self._pybullet_client)
         self._timeStep = timeStep
@@ -127,12 +128,12 @@ class HumanoidStablePDWholeUpper(object):
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
-            300] + [0] * 16 + [500, 500, 500, 500,
+            300] + [kp] * 16 + [500, 500, 500, 500,
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
             300
-        ] + [0] * 16
+        ] + [kp] * 16
         self._kdOrg = [
             0, 0, 0,
             0, 0, 0, 0,
@@ -142,12 +143,12 @@ class HumanoidStablePDWholeUpper(object):
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
-            30] + [0] * 16 + [50, 50, 50, 50,
+            30] + [kd] * 16 + [50, 50, 50, 50,
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
             30
-        ] + [0] * 16
+        ] + [kd] * 16
 
         self._jointIndicesAll = [
             chest, neck, rightHip, rightKnee, rightAnkle, rightShoulder, rightElbow,
@@ -325,8 +326,7 @@ class HumanoidStablePDWholeUpper(object):
     def calcCycleCount(self, simTime, cycleTime):
         phases = simTime / cycleTime
         count = math.floor(phases)
-        loop = True
-        # count = (loop) ? count : cMathUtil::Clamp(count, 0, 1);
+
         return count
 
     def getCycleTime(self):
@@ -336,26 +336,19 @@ class HumanoidStablePDWholeUpper(object):
 
     def setSimTime(self, t):
         self._simTime = t
-
         keyFrameDuration = self._mocap_data.getKeyFrameDuration()
         cycleTime = self.getCycleTime()
-
         self._cycleCount = self.calcCycleCount(t, cycleTime)
-
         frameTime = t - self._cycleCount * cycleTime
         if (frameTime < 0):
             frameTime += cycleTime
-
         self._frame = int(frameTime / keyFrameDuration)
-
         self._frameNext = self._frame + 1
         if (self._frameNext >= self._mocap_data.getNumFrames()):
             self._frameNext = self._frame
-
         self._frameFraction = (frameTime - self._frame * keyFrameDuration) / (keyFrameDuration)
 
     def computeCycleOffset(self):
-        firstFrame = 0
         lastFrame = self._mocap_data.getNumFrames() - 1
         frameData = self._mocap_data._motion_data['Frames'][0]
         frameDataNext = self._mocap_data._motion_data['Frames'][lastFrame]
@@ -373,7 +366,6 @@ class HumanoidStablePDWholeUpper(object):
         frameDataNext = self._mocap_data._motion_data['Frames'][self._frameNext]
 
         self._poseInterpolator.Slerp(frameFraction, frameData, frameDataNext, self._pybullet_client)
-        # print("self._poseInterpolator.Slerp(", frameFraction,")=", pose)
         self.computeCycleOffset()
         oldPos = self._poseInterpolator._basePos
         self._poseInterpolator._basePos = [
@@ -449,29 +441,20 @@ class HumanoidStablePDWholeUpper(object):
 
     def buildHeadingTrans(self, rootOrn):
         # align root transform 'forward' with world-space x axis
-        eul = self._pybullet_client.getEulerFromQuaternion(rootOrn)
         refDir = [1, 0, 0]
         rotVec = self._pybullet_client.rotateVector(rootOrn, refDir)
         heading = math.atan2(-rotVec[2], rotVec[0])
-
         headingOrn = self._pybullet_client.getQuaternionFromAxisAngle([0, 1, 0], -heading)
         return headingOrn
 
     def buildOriginTrans(self):
         rootPos, rootOrn = self._pybullet_client.getBasePositionAndOrientation(self._sim_model)
-
         invRootPos = [-rootPos[0], 0, -rootPos[2]]
-
         headingOrn = self.buildHeadingTrans(rootOrn)
-
-        headingMat = self._pybullet_client.getMatrixFromQuaternion(headingOrn)
-
         invOrigTransPos, invOrigTransOrn = self._pybullet_client.multiplyTransforms([0, 0, 0],
                                                                                     headingOrn,
                                                                                     invRootPos,
                                                                                     [0, 0, 0, 1])
-
-        invOrigTransMat = self._pybullet_client.getMatrixFromQuaternion(invOrigTransOrn)
 
         return invOrigTransPos, invOrigTransOrn
 
@@ -483,16 +466,11 @@ class HumanoidStablePDWholeUpper(object):
 
         rootTransPos, rootTransOrn = self.buildOriginTrans()
         basePos, baseOrn = self._pybullet_client.getBasePositionAndOrientation(self._sim_model)
-
         rootPosRel, dummy = self._pybullet_client.multiplyTransforms(rootTransPos, rootTransOrn,
                                                                      basePos, [0, 0, 0, 1])
-
         localPos, localOrn = self._pybullet_client.multiplyTransforms(rootTransPos, rootTransOrn,
                                                                       basePos, baseOrn)
 
-        localPos = [
-            localPos[0] - rootPosRel[0], localPos[1] - rootPosRel[1], localPos[2] - rootPosRel[2]
-        ]
 
         stateVector.append(rootPosRel[1])
 
@@ -507,7 +485,6 @@ class HumanoidStablePDWholeUpper(object):
 
         for pbJoint in range(self._pybullet_client.getNumJoints(self._sim_model)):
             j = self.pb2dmJoints[pbJoint]
-
             ls = linkStatesSim[pbJoint]
             linkPos = ls[0]
             linkOrn = ls[1]
@@ -536,14 +513,11 @@ class HumanoidStablePDWholeUpper(object):
 
         for pbJoint in range(self._pybullet_client.getNumJoints(self._sim_model)):
             j = self.pb2dmJoints[pbJoint]
-            # ls = self._pybullet_client.getLinkState(self._sim_model, j, computeLinkVelocity=True)
             ls = linkStatesSim[pbJoint]
-
             linkLinVel = ls[6]
             linkAngVel = ls[7]
             linkLinVelLocal, unused = self._pybullet_client.multiplyTransforms([0, 0, 0], rootTransOrn,
                                                                                linkLinVel, [0, 0, 0, 1])
-            # linkLinVelLocal=[linkLinVelLocal[0]-rootPosRel[0],linkLinVelLocal[1]-rootPosRel[1],linkLinVelLocal[2]-rootPosRel[2]]
             linkAngVelLocal, unused = self._pybullet_client.multiplyTransforms([0, 0, 0], rootTransOrn,
                                                                                linkAngVel, [0, 0, 0, 1])
 
@@ -552,9 +526,6 @@ class HumanoidStablePDWholeUpper(object):
             for l in linkAngVelLocal:
                 stateVector.append(l)
 
-        # print("stateVector len=",len(stateVector))
-        # for st in range (len(stateVector)):
-        #  print("state[",st,"]=",stateVector[st])
         return stateVector
 
     def terminates(self):
@@ -793,6 +764,8 @@ def tune_controller(args):
     from deep_mimic.env import motion_capture_data
     import time
     import wandb
+    from pytorch3d import transforms as t3d
+
 
     wandb.init(config=args)
     args = wandb.config
@@ -826,7 +799,6 @@ def tune_controller(args):
 
     _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser, kp=args.kp, kd=args.kd)
 
-    _isInitialized = True
     _pybullet_client.setTimeStep(timeStep)
     _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
 
@@ -848,16 +820,15 @@ def tune_controller(args):
 
     cycle = _mocapData.getCycleTime()
 
-    action = _mocapData._motion_data['Frames'][_humanoid._frameNext]
-    _humanoid.convertActionToPose(action[7:])
+    action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
+    desired_pose = _humanoid.convertActionToPose(action[7:])
 
     kin_joint = []
     sim_joint = []
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(900)
-    print(len(_mocapData._motion_data['Frames']))
+    steps = range(5000)
 
     for i in steps:
         # print(_humanoid._frameNext)
@@ -875,6 +846,7 @@ def tune_controller(args):
             _humanoid.getReward(kinPose)
             rewards.append(_humanoid._info_err)
             _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+
             maxForces = [
                 0, 0, 0,
                 0, 0, 0, 0,
@@ -884,74 +856,84 @@ def tune_controller(args):
                 150,
                 90, 90, 90, 90,
                 100, 100, 100, 100,
-                60] + [1] * 16 + [
+                60] + [50] * 16 + [
                 200, 200, 200, 200,
                 150,
                 90, 90, 90, 90,
                 100, 100, 100, 100,
                 60
-            ] + [1] * 16
+            ] + [50] * 16
 
             _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
             _pybullet_client.stepSimulation()
-            time.sleep(1/240)
+            time.sleep(1/30)
 
-        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(16)))
+        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(45)))
         simPose = [s[0] for s in state]
         simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
         kinVelocities = _humanoid._poseInterpolator.GetVelocities()
         simVelocities = [s[1] for s in state]
 
-        kin_joint.append(kinPose[7:][7])
-        sim_joint.append(simPose[7:][7])
+        kin_joint.append(kinPose[7:][:4])
+        sim_joint.append(simPose[7:][:4])
+
+        t1 = torch.tensor(kin_joint[-1])
+        # t1 = t3d.quaternion_to_matrix(t1)
+        # t1 = t3d.matrix_to_euler_angles(t1, "XYZ")
+
+        t2 = torch.tensor(sim_joint[-1])
+        # t2 = t3d.quaternion_to_matrix(t2)
+        # t2 = t3d.matrix_to_euler_angles(t2, "XYZ")
+        print(t1.numpy(), t2.numpy())
+
 
         kin_vel.append(kinVelocities[7])
         sim_vel.append(simVelocities[7])
 
 
 
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots(2)
-
-    ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
-    ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
-    ax[0].set_ylabel("rad")
-    ax[0].legend()
-    pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # ax[0].plot(list(steps), pos_err, color="black")
-
-    # abs_pos_err = [p*p for p in pos_err]
-    ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
-    ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
-    ax[1].set_ylabel("rad/s")
-    ax[1].set_xlabel("steps")
-    ax[1].legend()
-
-    vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # ax[1].plot(list(steps), vel_err, color="black")
+    # import matplotlib.pyplot as plt
     #
-    # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    # fig, ax = plt.subplots(2)
     #
-    # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
-    # ax[2].set_ylabel("pose")
-    # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
-    # ax[3].set_ylabel("vel")
-    # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
-    # ax[4].set_ylabel("end_eff")
-    # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
-    # ax[5].set_ylabel("root")
+    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
+    # ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
+    # ax[0].set_ylabel("rad")
+    # ax[0].legend()
+    # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
+    # # ax[0].plot(list(steps), pos_err, color="black")
     #
-    plt.show()
-
-    log = {
-        "pose": sum([abs(v) for v in pos_err]),
-        "velocity": sum([abs(v) for v in vel_err]),
-        "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
-    }
-
-    wandb.log(log)
+    # # abs_pos_err = [p*p for p in pos_err]
+    # ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
+    # ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
+    # ax[1].set_ylabel("rad/s")
+    # ax[1].set_xlabel("steps")
+    # ax[1].legend()
+    #
+    # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
+    # # ax[1].plot(list(steps), vel_err, color="black")
+    # #
+    # # # ax[2].plot(list(range(len(steps)*8)), rewards)
+    # #
+    # # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
+    # # ax[2].set_ylabel("pose")
+    # # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
+    # # ax[3].set_ylabel("vel")
+    # # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
+    # # ax[4].set_ylabel("end_eff")
+    # # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
+    # # ax[5].set_ylabel("root")
+    # #
+    # plt.show()
+    #
+    # log = {
+    #     "pose": sum([abs(v) for v in pos_err]),
+    #     "velocity": sum([abs(v) for v in vel_err]),
+    #     "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
+    # }
+    #
+    # wandb.log(log)
 
     _pybullet_client.disconnect()
 

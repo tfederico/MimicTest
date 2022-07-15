@@ -8,7 +8,7 @@ import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--motion_file', type=str, default="signer")
+parser.add_argument('--motion_file', type=str, default="tuning_motion_whole")
 args = parser.parse_args()
 
 # # otho init true, lr 3.0e-5
@@ -71,20 +71,24 @@ args = parser.parse_args()
 #     "F": "2022-05-10 18:13:14.109208"
 # }
 
-# final final motions
+# # final final motions
+# dirs = {
+#     "A": "2022-06-09 14:13:02.985153",
+#     "B": "2022-06-13 10:53:45.209827",
+#     "C": "2022-06-15 10:09:37.293896",
+#     "D": "2022-06-15 10:09:56.387131",
+#     "E": "2022-06-13 19:44:47.155149",
+#     "F": "2022-06-14 15:03:46.209549",
+#     "tuning_motion": "2022-06-08 05:28:43.743301"
+# }
+
 dirs = {
-    "A": "2022-06-09 14:13:02.985153",
-    "B": "2022-06-13 10:53:45.209827",
-    "C": "2022-06-15 10:09:37.293896",
-    "D": "2022-06-15 10:09:56.387131",
-    "E": "2022-06-13 19:44:47.155149",
-    "F": "2022-06-14 15:03:46.209549",
-    "tuning_motion": "2022-06-08 05:28:43.743301"
+    "tuning_motion_whole": "2022-07-13 15:50:36.487871"
 }
 
 
 log_dir = f"output/{dirs[args.motion_file]}/"
-env_name = 'HandDeepMimicSignerBulletEnv-v1'
+env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
 env = make_vec_env(env_name, env_kwargs=dict(renders=True, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt", test_mode=True))
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)

@@ -67,7 +67,7 @@ def main(args):
         seed=args.seed
     )
 
-    env_name = 'HandDeepMimicSignerBulletEnv-v1'
+    env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
     checkpoint_callback = CheckpointCallback(save_freq=100000, save_path=log_dir)
     tensorboard_callback = TensorboardCallback(verbose=0)
@@ -81,10 +81,12 @@ def main(args):
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback, tensorboard_callback])
 
-    n_envs = 100
+    n_envs = 8
 
-    #env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, vec_env_kwargs=dict(start_method='fork'))
-    env = DummyVecEnv([lambda: Monitor(gym.make(env_name, **dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")), log_dir) for _ in range(n_envs)])
+    env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, monitor_dir=log_dir,
+                       env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
+                       vec_env_kwargs=dict(start_method='fork'))
+    # env = DummyVecEnv([lambda: Monitor(gym.make(env_name, **dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")), log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
     model = PPO(
@@ -117,7 +119,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--motion_file', type=str, default="signer")
+    parser.add_argument('--motion_file', type=str, default="tuning_motion_whole")
     parser.add_argument('--glob_n_steps', type=int, default=5e7)
     parser.add_argument('--log_std_init', type=int, default=-3)
     parser.add_argument('--ortho_init', type=str2bool, default=True)
