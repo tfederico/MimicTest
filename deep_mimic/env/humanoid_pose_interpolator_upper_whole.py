@@ -588,16 +588,16 @@ class WholeHumanoidPoseInterpolator(object):
 
         # angle = action[index]
         # axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
+        # index += 4
         # self._rightHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         #
         # angle = action[index]
-        index += 1
+        # index += 1
         # self._rightKneeRot = [angle]
         #
         # angle = action[index]
         # axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
+        # index += 4
         # self._rightAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         self._rightHipRot = [0, 0, 0, 1]
         self._rightKneeRot = [0]
@@ -678,16 +678,16 @@ class WholeHumanoidPoseInterpolator(object):
 
         # angle = action[index]
         # axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
+        # index += 4
         # self._leftHipRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         #
         # angle = action[index]
-        index += 1
+        # index += 1
         # self._leftKneeRot = [angle]
         #
         # angle = action[index]
         # axis = [action[index + 1], action[index + 2], action[index + 3]]
-        index += 4
+        # index += 4
         # self._leftAnkleRot = pybullet_client.getQuaternionFromAxisAngle(axis, angle)
         self._leftHipRot = [0, 0, 0, 1]
         self._leftKneeRot = [0]

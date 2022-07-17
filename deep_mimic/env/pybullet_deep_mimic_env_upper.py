@@ -192,7 +192,7 @@ class PyBulletDeepMimicEnvUpper(PyBulletDeepMimicEnvSelector):
         state = self._humanoid.getState()
         phase = [state[0]]
         root_y = [state[1]]
-        rots = state[2:23] + state[44:65] + state[86:107]
+        rots = state[:23] + state[44:65] + state[86:107]
         vels = state[107:125] + state[143:161] + state[179:197]
         if self._n_clips > 1:
             return np.concatenate([np.array(phase),
