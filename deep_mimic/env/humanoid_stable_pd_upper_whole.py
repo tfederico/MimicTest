@@ -867,7 +867,7 @@ def tune_controller(args):
             _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
             _pybullet_client.stepSimulation()
-            time.sleep(1/30)
+            time.sleep(1/240)
 
         state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(45)))
         simPose = [s[0] for s in state]
