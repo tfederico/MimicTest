@@ -132,7 +132,7 @@
 	<joint name="right_shoulder" type="spherical" >
 		<parent link="chest" />
 		<child link="right_shoulder" />
-		<origin rpy = "-1.57 0 0" xyz = "-0.096200 0.974000 0.732440" />
+		<origin rpy = "0 0 0" xyz = "-0.096200 0.974000 0.732440" />
 	</joint>
 	<link name="right_elbow" >
 		<inertial>
@@ -552,7 +552,7 @@
 	<joint name="left_shoulder" type="spherical" >
 		<parent link="chest" />
 		<child link="left_shoulder" />
-		<origin rpy = "1.57 0 0" xyz = "-0.096200 0.974000 -0.732440" />
+		<origin rpy = "0 0 0" xyz = "-0.096200 0.974000 -0.732440" />
 	</joint>
 	<link name="left_elbow" >
 		<inertial>
