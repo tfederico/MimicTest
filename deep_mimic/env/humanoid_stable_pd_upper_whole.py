@@ -71,7 +71,7 @@ class HumanoidStablePDWholeUpper(object):
         # for j in range (self._pybullet_client.getNumJoints(self._sim_model)):
         #  self._pybullet_client.setCollisionFilterGroupMask(self._sim_model,j,collisionFilterGroup=0,collisionFilterMask=0)
 
-        self._end_effectors = [5] + list(range(8, 24)) + [26] + list(range(30, 46))  # ankle and wrist, both left and right
+        self._end_effectors = [5, 8, 26, 30]  # ankle and wrist, both left and right
 
         self._kin_model = self._pybullet_client.loadURDF(
             "humanoid/whole_upper_humanoid.urdf", [0, 0.85, 0],
@@ -815,13 +815,11 @@ def tune_controller(args):
     needs_update_time = t - 1  # force update
 
     import time
+    from pytorch3d import transforms as t3d
 
     n_joints = _pybullet_client.getNumJoints(_humanoid._sim_model)
 
     cycle = _mocapData.getCycleTime()
-
-    action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
-    desired_pose = _humanoid.convertActionToPose(action[7:])
 
     kin_joint = []
     sim_joint = []
@@ -833,7 +831,40 @@ def tune_controller(args):
     for i in steps:
         # print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
-        desired_pose = _humanoid.convertActionToPose(action[7:])
+
+        action = action[7:]
+        dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+
+        angle_axis = []
+        base_index = 0
+        i = 0
+        skip = [2, 3, 4, 23, 24, 25]
+        for dof in dofs:
+            if i not in skip:
+                a = action[base_index:base_index+dof]
+                if dof == 4:
+                    # a = a[1:] + [a[0]]
+                    a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
+                    norm = math.sqrt(sum([b*b for b in a]))
+                    a = [b/norm for b in a]
+                    a = [norm] + a
+
+                angle_axis.append(a)
+            base_index += dof
+            i += 1
+
+        flat_angle_axis = []
+        for a in angle_axis:
+            flat_angle_axis += a
+
+        action = flat_angle_axis
+        desired_pose = _humanoid.convertActionToPose(action)
+
+        # desired_pose = desired_pose[7:]
+        # desired_pose = torch.tensor(np.reshape(desired_pose, (-1, 4)))
+        # desired_pose = t3d.quaternion_to_axis_angle(desired_pose).numpy()
+        # desired_pose = np.reshape(desired_pose, (-1))
+        # print(desired_pose)
         desired_pose[:7] = [0] * 7
 
         for i in range(240//240):
