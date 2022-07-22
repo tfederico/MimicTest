@@ -1,0 +1,20 @@
+entity: mrroboto
+project: whole-controller-tuner
+program: deep_mimic.env.humanoid_stable_pd_upper_whole
+command:
+  - ${env}
+  - ${interpreter}
+  - '-m'
+  - ${program}
+  - ${args}
+method: bayes
+metric:
+  name: error
+  goal: minimize
+parameters:
+  kp:
+    min: 0.0
+    max: 1000.0
+  kd:
+    min: 0.0
+    max: 1000.0

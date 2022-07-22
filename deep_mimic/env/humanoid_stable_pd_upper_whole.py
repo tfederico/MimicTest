@@ -1,3 +1,4 @@
+import numpy
 import torch
 from pybullet_utils import pd_controller_stable
 from deep_mimic.env import humanoid_pose_interpolator_upper_whole
@@ -776,7 +777,7 @@ def tune_controller(args):
     succ = arg_parser.load_file(path)
     timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
-    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
+    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.DIRECT)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
     _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
     _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -826,14 +827,15 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(5000)
+    steps = range(500)
 
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
         # print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
 
         action = action[7:]
-        dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+
 
         angle_axis = []
         base_index = 0
@@ -898,32 +900,48 @@ def tune_controller(args):
             _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
             _pybullet_client.stepSimulation()
-            time.sleep(1/240)
+            # time.sleep(1/240)
 
-        state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(45)))
-        simPose = [s[0] for s in state]
-        simPose = [0.0, 0.9, 0.0, 1, 0, 0, 0] + simPose[1:]
+        simPose = []
+        simVelocities = []
+        rearranged_kin_pose = []
+        base_index = 7
+        for i, dof in enumerate(dofs):
+            state = _pybullet_client.getJointStateMultiDof(_humanoid._sim_model, i+1)
+            simVelocities.append(state[1])
+            simPose.append(state[0] if len(state[0]) > 0 else kinPose[base_index:base_index+dof])
+            rearranged_kin_pose.append(kinPose[base_index:base_index+dof])
+            base_index += dof
+
+        # state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(45)))
+
+
+        # simPose = [s[0] for s in state]
         kinVelocities = _humanoid._poseInterpolator.GetVelocities()
-        simVelocities = [s[1] for s in state]
-
-        kin_joint.append(kinPose[7:][:4])
-        sim_joint.append(simPose[7:][:4])
-
-        t1 = torch.tensor(kin_joint[-1])
-        # t1 = t3d.quaternion_to_matrix(t1)
-        # t1 = t3d.matrix_to_euler_angles(t1, "XYZ")
-
-        t2 = torch.tensor(sim_joint[-1])
-        # t2 = t3d.quaternion_to_matrix(t2)
-        # t2 = t3d.matrix_to_euler_angles(t2, "XYZ")
-        print(t1.numpy(), t2.numpy())
 
 
-        kin_vel.append(kinVelocities[7])
-        sim_vel.append(simVelocities[7])
+        kinPose = rearranged_kin_pose
 
+        # kin_joint.append(kinPose[7:][:4])
+        # sim_joint.append(simPose[7:][:4])
+        #
+        # kin_vel.append(kinVelocities[7])
+        # sim_vel.append(simVelocities[7])
 
+    pos_err = []
 
+    for k, s in zip(kinPose, simPose):
+        if len(s) == 4:
+            kin = t3d.matrix_to_euler_angles(t3d.quaternion_to_matrix(torch.tensor(k)), "XYZ").numpy()
+            sim = t3d.matrix_to_euler_angles(t3d.quaternion_to_matrix(torch.tensor(s)), "XYZ").numpy()
+            diff = kin - sim
+            diff = math.sqrt(sum([b*b for b in diff]))
+            pos_err.append(diff)
+        else:
+            diff = [b-a for a, b in zip(k, s)]
+            pos_err.append(math.sqrt(sum([b*b for b in diff])))
+
+    print(sum(pos_err))
     # import matplotlib.pyplot as plt
     #
     # fig, ax = plt.subplots(2)
@@ -958,13 +976,11 @@ def tune_controller(args):
     # #
     # plt.show()
     #
-    # log = {
-    #     "pose": sum([abs(v) for v in pos_err]),
-    #     "velocity": sum([abs(v) for v in vel_err]),
-    #     "error": sum([abs(v) for v in pos_err]) + sum([abs(v) for v in vel_err])
-    # }
-    #
-    # wandb.log(log)
+    log = {
+        "pose": sum(pos_err),
+    }
+
+    wandb.log(log)
 
     _pybullet_client.disconnect()
 
