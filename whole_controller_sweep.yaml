@@ -7,9 +7,9 @@ command:
   - '-m'
   - ${program}
   - ${args}
-method: bayes
+method: random
 metric:
-  name: error
+  name: pose
   goal: minimize
 parameters:
   kp:

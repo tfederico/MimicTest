@@ -66,7 +66,7 @@ class PyBulletDeepMimicEnv(Env):
             timeStep = self.timeStep
             useFixedBase = False
             self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData,
-                                                                timeStep, useFixedBase, self._arg_parser, kd=5, kp=50)
+                                                                timeStep, useFixedBase, self._arg_parser, kd=9, kp=900)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)

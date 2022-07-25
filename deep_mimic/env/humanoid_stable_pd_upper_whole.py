@@ -777,7 +777,7 @@ def tune_controller(args):
     succ = arg_parser.load_file(path)
     timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
-    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.DIRECT)
+    _pybullet_client = bullet_client.BulletClient(connection_mode=p1.GUI)
     # # disable 'GUI' since it slows down a lot on Mac OSX and some other platforms
     _pybullet_client.configureDebugVisualizer(_pybullet_client.COV_ENABLE_GUI, 0)
     _pybullet_client.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -827,7 +827,7 @@ def tune_controller(args):
     kin_vel = []
     sim_vel = []
     rewards = []
-    steps = range(500)
+    steps = range(5000)
 
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
@@ -900,7 +900,7 @@ def tune_controller(args):
             _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
             _pybullet_client.stepSimulation()
-            # time.sleep(1/240)
+            time.sleep(1/240)
 
         simPose = []
         simVelocities = []
