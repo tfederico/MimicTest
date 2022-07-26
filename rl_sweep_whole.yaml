@@ -17,11 +17,11 @@ parameters:
   glob_n_steps:
     values: [10000000]
   log_std_init:
-    values: [-3, -2, -1]
+    values: [-5, -3, -2, -1]
   ortho_init:
     values: [false, true]
   learning_rate:
-    values: [3.0e-5, 1.0e-5, 1.0e-6, 3.0e-6]
+    values: [1.0e-4, 3.0e-5, 1.0e-5, 1.0e-6, 3.0e-6]
   gamma:
     values: [0.9, 0.95]
   batch_size:

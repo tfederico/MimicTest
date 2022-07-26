@@ -314,6 +314,8 @@ class PyBulletDeepMimicEnv(Env):
 def test_pybullet():
     from pybullet_utils.arg_parser import ArgParser
     import time
+    from pytorch3d import transforms as t3d
+    import torch
 
     arg_file = "run_humanoid3d_tuning_motion_whole_args.txt"
     arg_parser = ArgParser()
@@ -328,20 +330,48 @@ def test_pybullet():
                                use_com_reward=False)
 
 
-    steps = range(1400)
+    steps = range(700)
 
     actions = []
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
+        # print(_humanoid._frameNext)
         action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][1:]
-        actions.append(action[7:])
-        env.set_action(0, action[7:])
+
+        action = action[7:]
+
+        angle_axis = []
+        base_index = 0
+        i = 0
+        skip = [2, 3, 4, 23, 24, 25]
+        for dof in dofs:
+            if i not in skip:
+                a = action[base_index:base_index + dof]
+                if dof == 4:
+                    # a = a[1:] + [a[0]]
+                    a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
+                    norm = math.sqrt(sum([b * b for b in a]))
+                    a = [b / norm for b in a]
+                    a = [norm] + a
+
+                angle_axis.append(a)
+            base_index += dof
+            i += 1
+
+        flat_angle_axis = []
+        for a in angle_axis:
+            flat_angle_axis += a
+
+        action = flat_angle_axis
+        actions.append(action)
+        env.set_action(0, action)
 
         env.update(timeStep)
         time.sleep(1/240)
 
     actions = np.array(actions)
 
-    for i in range(68):
+    for i in range(50):
         print(i, min(actions[:, i]), max(actions[:, i]))
 
 
