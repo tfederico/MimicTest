@@ -20,10 +20,8 @@ class InitializationStrategy(Enum):
 
 class PyBulletDeepMimicEnv(Env):
 
-    def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None,
-                 time_step=1./240,
-                 init_strategy=InitializationStrategy.RANDOM,
-                 use_com_reward=False):
+    def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
+                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False):
         super().__init__(arg_parser, enable_draw)
         self._num_agents = 1
         self._pybullet_client = pybullet_client
@@ -65,8 +63,8 @@ class PyBulletDeepMimicEnv(Env):
             self._mocapData.Load(motionPath)
             timeStep = self.timeStep
             useFixedBase = False
-            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData,
-                                                                timeStep, useFixedBase, self._arg_parser, kd=9, kp=900)
+            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData, timeStep,
+                                                                  useFixedBase, self._arg_parser, kd=0.6, kp=50)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)
@@ -110,8 +108,8 @@ class PyBulletDeepMimicEnv(Env):
     def get_state_size(self, agent_id):
         #cCtController::GetStateSize()
         #int state_size = cDeepMimicCharController::GetStateSize();
-        #                     state_size += GetStatePoseSize();#(4+3)*(9+15+15) + 1 = 274
-        #                     state_size += GetStateVelSize(); #(4+3-1)*(9+15+15) = 234
+        #                     state_size += GetStatePoseSize();#(4+3)*(7+16+16) + 1 = 274
+        #                     state_size += GetStateVelSize(); #(4+3-1)*(7+16+16) = 234
         #state_size += GetStatePhaseSize();#1
         return 509
 
@@ -178,13 +176,13 @@ class PyBulletDeepMimicEnv(Env):
             # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
             -12.56000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [0] * 16 + [
+        ] + [-1.57] * 16 + [
             # -7.779999999, -1.000000000, -1.000000000, -1.000000000,
             # -7.850000000,
             # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
             -8.460000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [0] * 16
+        ] + [-1.57] * 16
 
         return out_scale
 
@@ -198,13 +196,13 @@ class PyBulletDeepMimicEnv(Env):
             # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
             12.560000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [1.57] * 16 + [
+        ] + [3.14] * 16 + [
             # 8.7799999, 1.0000000, 1.0000000, 1.0000000,
             # 4.7100000,
             # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
             10.100000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [1.57] * 16
+        ] + [3.14] * 16
         return out_scale
 
     def set_mode(self, mode):
@@ -314,6 +312,8 @@ class PyBulletDeepMimicEnv(Env):
 def test_pybullet():
     from pybullet_utils.arg_parser import ArgParser
     import time
+    from pytorch3d import transforms as t3d
+    import torch
 
     arg_file = "run_humanoid3d_tuning_motion_whole_args.txt"
     arg_parser = ArgParser()
@@ -329,19 +329,41 @@ def test_pybullet():
 
 
     steps = range(1400)
-
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     actions = []
     for i in steps:
-        action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][1:]
-        actions.append(action[7:])
-        env.set_action(0, action[7:])
+        action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][8:]
+        angle_axis = []
+        base_index = 0
+        i = 0
+        skip = [2, 3, 4, 23, 24, 25]
+        for dof in dofs:
+            if i not in skip:
+                a = action[base_index:base_index + dof]
+                if dof == 4:
+                    a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
+                    norm = math.sqrt(sum([b * b for b in a]))
+                    a = [b / norm for b in a]
+                    a = [norm] + a
+
+                angle_axis.append(a)
+            base_index += dof
+            i += 1
+
+        flat_angle_axis = []
+        for a in angle_axis:
+            flat_angle_axis += a
+
+        action = flat_angle_axis
+        actions.append(action)
+        env.set_action(0, action)
 
         env.update(timeStep)
         time.sleep(1/240)
 
     actions = np.array(actions)
 
-    for i in range(68):
+    for i in range(50):
         print(i, min(actions[:, i]), max(actions[:, i]))
 
 

@@ -13,6 +13,7 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 class CheatingBox(gym.spaces.Box):
     def __init__(self, low, high, shape=None, dtype=np.float32):
         super().__init__(low, high, shape, dtype)
@@ -24,8 +25,6 @@ class CheatingBox(gym.spaces.Box):
 class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
-
-
 
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
@@ -45,7 +44,7 @@ class WholeDeepBulletEnv(gym.Env):
         self._arg_parser = ArgParser()
         Logger.print2("===========================================================")
         succ = False
-        if (arg_file != ''):
+        if arg_file != '':
             path = pybullet_data.getDataPath() + "/args/" + arg_file
             succ = self._arg_parser.load_file(path)
             Logger.print2(arg_file)
@@ -71,7 +70,7 @@ class WholeDeepBulletEnv(gym.Env):
             print("Environment running in TEST mode")
 
         # cam options
-        self._cam_dist = 3
+        self._cam_dist = 1
         self._cam_pitch = -30
         self._cam_yaw = -60
         self._cam_roll = 0
@@ -213,8 +212,6 @@ class WholeDeepBulletEnv(gym.Env):
             state = self.scale_observation(state)
         return state
 
-
-
     def render(self, mode='human', close=False):
         if mode == "human":
             self._renders = True
@@ -228,14 +225,13 @@ class WholeDeepBulletEnv(gym.Env):
         rpy = self._p.getEulerFromQuaternion(orn)  # rpy, in radians
         rpy = 180 / np.pi * np.asarray(rpy)  # convert rpy in degrees
 
-        if (not self._p == None):
-            view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
-                cameraTargetPosition=base_pos,
-                distance=self._cam_dist,
-                yaw=self._cam_yaw,
-                pitch=self._cam_pitch,
-                roll=self._cam_roll,
-                upAxisIndex=1)
+        if self._p:
+            view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
+                                                                    distance=self._cam_dist,
+                                                                    yaw=self._cam_yaw,
+                                                                    pitch=self._cam_pitch,
+                                                                    roll=self._cam_roll,
+                                                                    upAxisIndex=1)
             proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
                                                              aspect=float(self._render_width) / self._render_height,
                                                              nearVal=0.1,
@@ -274,9 +270,57 @@ class WholeDeepBulletEnv(gym.Env):
             cameraPitch=self._cam_pitch,
             cameraTargetPosition=base_pos)
 
+
 class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
     def __init__(self, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
         # start the bullet physics server
         WholeDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
+
+
+def main():
+    import time
+    from pytorch3d import transforms as t3d
+    import torch
+    env = WholeDeepMimicSignerBulletEnv(renders=True)
+    env.reset()
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+    for i in range(1000):
+        env.render()
+
+        #action = env.action_space.sample()
+        action = env.internal_env._mocapData._motion_data['Frames'][env.internal_env._humanoid._frameNext][8:]
+
+        angle_axis = []
+        base_index = 0
+        i = 0
+        skip = [2, 3, 4, 23, 24, 25]
+        for dof in dofs:
+            if i not in skip:
+                a = action[base_index:base_index + dof]
+                if dof == 4:
+                    a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
+                    norm = math.sqrt(sum([b * b for b in a]))
+                    a = [b / norm for b in a]
+                    a = [norm] + a
+
+                angle_axis.append(a)
+            base_index += dof
+            i += 1
+
+        flat_angle_axis = []
+        for a in angle_axis:
+            flat_angle_axis += a
+
+        action = flat_angle_axis
+
+        action = env.scale_action(action)
+
+        env.step(action)
+        time.sleep(1/240)
+    env.close()
+
+
+if __name__ == '__main__':
+    main()

@@ -14,7 +14,6 @@ from wandb.integration.sb3 import WandbCallback
 from datetime import datetime
 
 
-
 def str2bool(v):
     if isinstance(v, bool):
        return v
@@ -45,7 +44,7 @@ def main(args):
         activation_fn=nn.ReLU,
         net_arch=[dict(pi=[1024, 512], vf=[1024, 512])],
         log_std_init=args.log_std_init,
-        ortho_init=args.ortho_init,
+        ortho_init=True,
         optimizer_kwargs=dict(weight_decay=args.weight_decay)
     )
     model_args = dict(
@@ -55,7 +54,7 @@ def main(args):
         n_steps=args.n_steps,
         batch_size=args.batch_size,
         n_epochs=args.n_epochs,
-        gamma=args.gamma,
+        gamma=0.95,
         gae_lambda=0.95,
         clip_range=0.2,
         ent_coef=0,
@@ -69,24 +68,27 @@ def main(args):
 
     env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
-    checkpoint_callback = CheckpointCallback(save_freq=100000, save_path=log_dir)
+    checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=log_dir)
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
+    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False,
+                                                      arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
-    eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir,
-                                 log_path=log_dir, n_eval_episodes=100,
+    eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir, log_path=log_dir, n_eval_episodes=10,
                                  eval_freq=50000, deterministic=True)
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback, tensorboard_callback])
 
-    n_envs = 8
+    n_envs = 10
 
-    env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, monitor_dir=log_dir,
-                       env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
-                       vec_env_kwargs=dict(start_method='fork'))
-    # env = DummyVecEnv([lambda: Monitor(gym.make(env_name, **dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")), log_dir) for _ in range(n_envs)])
+    # env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, monitor_dir=log_dir,
+    #                    env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
+    #                    vec_env_kwargs=dict(start_method='fork'))
+    env = DummyVecEnv([lambda: Monitor(gym.make(env_name,
+                                                **dict(renders=False,
+                                                       arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")),
+                                       log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
     model = PPO(
@@ -116,15 +118,14 @@ def main(args):
     env.close()
     run.finish()
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--motion_file', type=str, default="tuning_motion_whole")
     parser.add_argument('--glob_n_steps', type=int, default=5e7)
     parser.add_argument('--log_std_init', type=int, default=-3)
-    parser.add_argument('--ortho_init', type=str2bool, default=True)
     parser.add_argument('--learning_rate', type=float, default=3.0e-6)
-    parser.add_argument('--gamma', type=float, default=0.95)
     parser.add_argument('--weight_decay', type=float, default=1.0e-5)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--n_steps', type=int, default=4096)
