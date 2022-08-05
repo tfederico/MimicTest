@@ -148,21 +148,28 @@ class PyBulletDeepMimicEnv(Env):
         return np.array([])
 
     def build_action_offset(self, agent_id):
-        out_offset = [0] * self.get_action_size(agent_id)
-        out_offset = [
-            -0.5 * (up + low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
-        ]
+
+        out_offset = []
+        dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
+        lows = self.build_action_bound_min(-1)
+        highs = self.build_action_bound_max(-1)
+
+        for i, dof in enumerate(dofs):
+            if dof == 4:
+                out_offset += [0.0, 0.0, 0.0, -0.2]
+            else:
+                out_offset.append(-0.5*(highs[i]+lows[i]))
+
         #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
         #see cCtCtrlUtil::BuildOffsetScalePDSpherical
         return np.array(out_offset)
 
     def build_action_scale(self, agent_id):
-        out_scale = [1] * self.get_action_size(agent_id)
         #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
         #see cCtCtrlUtil::BuildOffsetScalePDSpherical
-        out_scale = [
-            0.5/(up - low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
-        ]
+        lows = self.build_action_bound_min(-1)
+        highs = self.build_action_bound_max(-1)
+        out_scale = [2/(h - l) for l, h in zip(lows, highs)]
         return np.array(out_scale)
 
     def build_action_bound_min(self, agent_id):
