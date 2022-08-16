@@ -55,12 +55,12 @@ def main(args):
         batch_size=args.batch_size,
         n_epochs=args.n_epochs,
         gamma=0.95,
-        gae_lambda=0.95,
-        clip_range=0.2,
+        gae_lambda=args.gae_lambda,
+        clip_range=args.clip_range,
         ent_coef=0,
         vf_coef=5.,
         max_grad_norm=100.,
-        target_kl=0.05,
+        target_kl=args.target_kl,
         tensorboard_log=log_dir,
         policy_kwargs=policy_kwargs,
         seed=args.seed
@@ -68,11 +68,12 @@ def main(args):
 
     env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
-    checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=log_dir)
+    checkpoint_callback = CheckpointCallback(save_freq=1000000, save_path=log_dir)
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False,
+    eval_env = make_vec_env(env_name, env_kwargs=dict(kp=args.kp, kd=args.kd,
+                                                      renders=False,
                                                       arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir, log_path=log_dir, n_eval_episodes=10,
@@ -80,13 +81,13 @@ def main(args):
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback, tensorboard_callback])
 
-    n_envs = 10
+    n_envs = 1
 
     # env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, monitor_dir=log_dir,
     #                    env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
     #                    vec_env_kwargs=dict(start_method='fork'))
     env = DummyVecEnv([lambda: Monitor(gym.make(env_name,
-                                                **dict(renders=False,
+                                                **dict(kp=args.kp, kd=args.kd, renders=False,
                                                        arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")),
                                        log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
@@ -130,7 +131,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--n_steps', type=int, default=4096)
     parser.add_argument('--n_epochs', type=int, default=3)
+    parser.add_argument('--gae_lambda', type=float, default=0.95)
+    parser.add_argument('--clip_range', type=float, default=0.2)
+    parser.add_argument('--target_kl', type=float, default=0.05)
     parser.add_argument('--seed', type=int, default=8)
+    parser.add_argument('--kp', type=float, default=50)
+    parser.add_argument('--kd', type=float, default=0.6)
 
     args = parser.parse_args()
 

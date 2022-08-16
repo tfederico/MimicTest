@@ -865,20 +865,19 @@ def tune_controller(args):
 
     rewards = []
     pos_err = []
-    steps = range(5000)
+    steps = range(798)
     handsJointIndices = list(range(rightWrist, rightPinkyDistal + 1)) + list(range(leftWrist, leftPinkyDistal + 1))
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
-        # print(_humanoid._frameNext)
+        print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
         action = action[7:]
 
         angle_axis = []
         base_index = 0
-        i = 0
         skip = [2, 3, 4, 23, 24, 25]
-        for dof in dofs:
-            if i not in skip:
+        for j, dof in enumerate(dofs):
+            if j not in skip:
                 a = action[base_index:base_index+dof]
                 if dof == 4:
                     # a = a[1:] + [a[0]]
@@ -889,7 +888,6 @@ def tune_controller(args):
 
                 angle_axis.append(a)
             base_index += dof
-            i += 1
 
         flat_angle_axis = []
         for a in angle_axis:
@@ -900,38 +898,38 @@ def tune_controller(args):
 
         desired_pose[:7] = [0] * 7
 
-        for i in range(int(240*timeStep)):
-            _pybullet_client.setTimeStep(timeStep)
-            _humanoid._timeStep = timeStep
-            t += timeStep
-            _humanoid.setSimTime(t)
-            kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-            _humanoid.getReward(kinPose)
-            rewards.append(_humanoid._info_err)
-            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+        _pybullet_client.setTimeStep(timeStep)
+        _humanoid._timeStep = timeStep
+        t += timeStep
+        _humanoid.setSimTime(t)
+        kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-            maxForces = [
-                0, 0, 0,
-                0, 0, 0, 0,
-                200, 200, 200, 200,
-                50, 50, 50, 50,
-                200, 200, 200, 200,
-                150,
-                90, 90, 90, 90,
-                100, 100, 100, 100,
-                60] + [50] * 16 + [
-                200, 200, 200, 200,
-                150,
-                90, 90, 90, 90,
-                100, 100, 100, 100,
-                60
-            ] + [50] * 16
+        _humanoid.getReward(kinPose)
+        rewards.append(_humanoid._info_err)
+        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
 
-            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+        maxForces = [
+            0, 0, 0,
+            0, 0, 0, 0,
+            200, 200, 200, 200,
+            50, 50, 50, 50,
+            200, 200, 200, 200,
+            150,
+            90, 90, 90, 90,
+            100, 100, 100, 100,
+            60] + [50] * 16 + [
+            200, 200, 200, 200,
+            150,
+            90, 90, 90, 90,
+            100, 100, 100, 100,
+            60
+        ] + [50] * 16
 
-            _pybullet_client.stepSimulation()
-            time.sleep(1/240)
+        _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+
+        _pybullet_client.stepSimulation()
+        time.sleep(timeStep)
 
         # debug_sim_pose = [simPose[h] for h in handsJointIndices]
         # debug_kin_pose = [kinPose[h] for h in handsJointIndices]

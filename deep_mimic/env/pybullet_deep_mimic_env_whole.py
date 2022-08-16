@@ -21,7 +21,7 @@ class InitializationStrategy(Enum):
 class PyBulletDeepMimicEnv(Env):
 
     def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
-                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False):
+                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False, kd=None, kp=None):
         super().__init__(arg_parser, enable_draw)
         self._num_agents = 1
         self._pybullet_client = pybullet_client
@@ -29,6 +29,8 @@ class PyBulletDeepMimicEnv(Env):
         self._arg_parser = arg_parser
         self.timeStep = time_step
         self._init_strategy = init_strategy
+        self._kp = kp
+        self._kd = kd
         print("Initialization strategy: {:s}".format(init_strategy))
         self.reset()
 
@@ -64,7 +66,7 @@ class PyBulletDeepMimicEnv(Env):
             timeStep = self.timeStep
             useFixedBase = False
             self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData, timeStep,
-                                                                  useFixedBase, self._arg_parser, kd=0.6, kp=50)
+                                                                  useFixedBase, self._arg_parser, kd=self._kd, kp=self._kp)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)
@@ -148,28 +150,61 @@ class PyBulletDeepMimicEnv(Env):
         return np.array([])
 
     def build_action_offset(self, agent_id):
-
-        out_offset = []
-        dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
-        lows = self.build_action_bound_min(-1)
-        highs = self.build_action_bound_max(-1)
-
-        for i, dof in enumerate(dofs):
-            if dof == 4:
-                out_offset += [0.0, 0.0, 0.0, -0.2]
-            else:
-                out_offset.append(-0.5*(highs[i]+lows[i]))
-
-        #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
-        #see cCtCtrlUtil::BuildOffsetScalePDSpherical
+        # out_offset = []
+        # dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
+        # lows = self.build_action_bound_min(-1)
+        # highs = self.build_action_bound_max(-1)
+        #
+        # for i, dof in enumerate(dofs):
+        #     if dof == 4:
+        #         out_offset += [0.0, 0.0, 0.0, -0.2]
+        #     else:
+        #         out_offset.append(-0.5*(highs[i]+lows[i]))
+        out_offset = [
+            0.0000000000, 0.0000000000, 0.0000000000, -0.200000000,
+            0.0000000000, 0.0000000000, 0.0000000000, -0.200000000,
+            # 0.0000000000, 0.0000000000, 0.00000000, -0.2000000,
+            # 1.57000000,
+            # 0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            -1.5700000,
+        ] + [-0.785] * 16 + [
+            # 0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            # 1.57000000,
+            # 0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            -1.5700000
+        ] + [-0.785] * 16
         return np.array(out_offset)
 
     def build_action_scale(self, agent_id):
-        #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
-        #see cCtCtrlUtil::BuildOffsetScalePDSpherical
-        lows = self.build_action_bound_min(-1)
-        highs = self.build_action_bound_max(-1)
-        out_scale = [2/(h - l) for l, h in zip(lows, highs)]
+        # out_scale = []
+        # dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
+        # lows = self.build_action_bound_min(-1)
+        # highs = self.build_action_bound_max(-1)
+        # base_dof = 0
+        # for i, dof in enumerate(dofs):
+        #     if dof == 4:
+        #         out_scale += [0.5/(highs[base_dof+k] - lows[base_dof+k]) for k in range(4)]
+        #     else:
+        #         out_scale.append(2/(highs[base_dof]-lows[base_dof]))
+        #     base_dof += dof
+        # # out_scale = [2/(h - l) for l, h in zip(lows, highs)]
+        out_scale = [
+            0.20833333333333, 1.00000000000000, 1.00000000000000, 1.00000000000000,
+            0.25000000000000, 1.00000000000000, 1.00000000000000, 1.00000000000000,
+            # 0.12077294685990, 1.00000000000000, 1.000000000000, 1.000000000000,
+            # 0.159235668789,
+            # 0.159235668789, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.079617834394, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.159235668789,
+        ] + [0.31847133758] * 16 + [
+            # 0.120772946859, 1.000000000000, 1.000000000000, 1.000000000000,
+            # 0.159235668789,
+            # 0.159235668789, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.107758620689, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.159235668789
+        ] + [0.31847133758] * 16
         return np.array(out_scale)
 
     def build_action_bound_min(self, agent_id):
@@ -183,13 +218,13 @@ class PyBulletDeepMimicEnv(Env):
             # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
             -12.56000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [-1.57] * 16 + [
+        ] + [-2.355] * 16 + [
             # -7.779999999, -1.000000000, -1.000000000, -1.000000000,
             # -7.850000000,
             # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
             -8.460000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [-1.57] * 16
+        ] + [-2.355] * 16
 
         return out_scale
 
@@ -203,13 +238,13 @@ class PyBulletDeepMimicEnv(Env):
             # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
             12.560000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [3.14] * 16 + [
+        ] + [3.925] * 16 + [
             # 8.7799999, 1.0000000, 1.0000000, 1.0000000,
             # 4.7100000,
             # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
             10.100000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [3.14] * 16
+        ] + [3.925] * 16
         return out_scale
 
     def set_mode(self, mode):
@@ -326,7 +361,7 @@ def test_pybullet():
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1. / 240
+    timeStep = 1. / 30
     _init_strategy = InitializationStrategy.START
 
     env = PyBulletDeepMimicEnv(arg_parser=arg_parser, enable_draw=True, pybullet_client=None,
@@ -366,7 +401,7 @@ def test_pybullet():
         env.set_action(0, action)
 
         env.update(timeStep)
-        time.sleep(1/240)
+        time.sleep(1/30)
 
     actions = np.array(actions)
 

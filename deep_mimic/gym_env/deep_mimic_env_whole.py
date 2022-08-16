@@ -26,7 +26,7 @@ class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file='', test_mode=False,
+    def __init__(self, kp, kd, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -50,6 +50,9 @@ class WholeDeepBulletEnv(gym.Env):
             Logger.print2(arg_file)
         assert succ, Logger.print2('Failed to load args from: ' + arg_file)
 
+        self._kp = kp
+        self._kd = kd
+        wandb.log({'kp': self._kp, 'kd': self._kd})
         self._p = None
         self._time_step = time_step
         self.internal_env = None
@@ -92,7 +95,7 @@ class WholeDeepBulletEnv(gym.Env):
             action_bound_min = self.scale_action(action_bound_min)
             action_bound_max = self.scale_action(action_bound_max)
 
-        self.action_space = CheatingBox(action_bound_min, action_bound_max)
+        self.action_space = spaces.Box(action_bound_min, action_bound_max, dtype=np.float32)#CheatingBox(action_bound_min, action_bound_max)
 
         observation_min = np.array([0.0]+[-100.0]+[-4.0]*273+[-500.0]*234)
         observation_max = np.array([1.0]+[100.0]+[4.0]*273+[500.0]*234)
@@ -114,6 +117,11 @@ class WholeDeepBulletEnv(gym.Env):
         std = 1./self._action_scale
         return (action - mean) / (std)
 
+    def unscale_action(self, scaled_action):
+        mean = -self._action_offset
+        std = 1./self._action_scale
+        return scaled_action * std + mean
+
     def scale_observation(self, state):
         mean = -self._state_offset
         std = 1./self._state_scale
@@ -123,11 +131,6 @@ class WholeDeepBulletEnv(gym.Env):
         mean = -self._state_offset
         std = 1./self._state_scale
         return scaled_state * std + mean
-
-    def unscale_action(self, scaled_action):
-        mean = -self._action_offset
-        std = 1./self._action_scale
-        return scaled_action * std + mean
 
     def _configure(self, display=None):
         self.display = display
@@ -191,7 +194,8 @@ class WholeDeepBulletEnv(gym.Env):
             self.internal_env = PyBulletDeepMimicEnv(self._arg_parser, self._renders,
                                                      time_step=self._time_step,
                                                      init_strategy=init_strat,
-                                                     use_com_reward=self._use_com_reward)
+                                                     use_com_reward=self._use_com_reward,
+                                                     kd=self._kd, kp=self._kp)
 
         self.internal_env.reset()
         self._p = self.internal_env._pybullet_client
@@ -274,9 +278,9 @@ class WholeDeepBulletEnv(gym.Env):
 class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
+    def __init__(self, kp, kd, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
         # start the bullet physics server
-        WholeDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
+        WholeDeepBulletEnv.__init__(self, kp, kd, renders, arg_file, test_mode=test_mode)
 
 
 def main():
@@ -286,6 +290,7 @@ def main():
     env = WholeDeepMimicSignerBulletEnv(renders=True)
     env.reset()
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+    rewards = []
     for i in range(1000):
         env.render()
 
@@ -317,9 +322,12 @@ def main():
 
         action = env.scale_action(action)
 
-        env.step(action)
+        state, reward, done, info = env.step(action)
+        rewards.append(reward)
         time.sleep(1/240)
     env.close()
+    print(sum(rewards))
+    print(sum(rewards) / len(rewards))
 
 
 if __name__ == '__main__':

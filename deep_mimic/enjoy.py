@@ -83,7 +83,7 @@ args = parser.parse_args()
 # }
 
 dirs = {
-    "tuning_motion_whole": "2022-08-03 17:19:27.831835"
+    "tuning_motion_whole": "2022-08-10 17:49:37.944509"
 }
 
 
