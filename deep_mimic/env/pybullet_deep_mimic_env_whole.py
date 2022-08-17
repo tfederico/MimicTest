@@ -21,7 +21,7 @@ class InitializationStrategy(Enum):
 class PyBulletDeepMimicEnv(Env):
 
     def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
-                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False, kd=None, kp=None):
+                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False):
         super().__init__(arg_parser, enable_draw)
         self._num_agents = 1
         self._pybullet_client = pybullet_client
@@ -29,8 +29,6 @@ class PyBulletDeepMimicEnv(Env):
         self._arg_parser = arg_parser
         self.timeStep = time_step
         self._init_strategy = init_strategy
-        self._kp = kp
-        self._kd = kd
         print("Initialization strategy: {:s}".format(init_strategy))
         self.reset()
 
@@ -66,7 +64,7 @@ class PyBulletDeepMimicEnv(Env):
             timeStep = self.timeStep
             useFixedBase = False
             self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData, timeStep,
-                                                                  useFixedBase, self._arg_parser, kd=self._kd, kp=self._kp)
+                                                                  useFixedBase, self._arg_parser)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)

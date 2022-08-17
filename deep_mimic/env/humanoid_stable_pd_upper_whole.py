@@ -56,7 +56,7 @@ jointFrictionForce = 0
 class HumanoidStablePDWholeUpper(object):
 
     def __init__(self, pybullet_client, mocap_data, timeStep,
-                 useFixedBase=True, arg_parser=None, useComReward=False, kp=None, kd=None):
+                 useFixedBase=True, arg_parser=None, useComReward=False):
         self._pybullet_client = pybullet_client
         self._mocap_data = mocap_data
         self._arg_parser = arg_parser
@@ -129,12 +129,12 @@ class HumanoidStablePDWholeUpper(object):
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
-            300] + [kp] * 16 + [500, 500, 500, 500,
+            300] + [50] * 16 + [500, 500, 500, 500,
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
             300
-        ] + [kp] * 16
+        ] + [50] * 16
         self._kdOrg = [
             0, 0, 0,
             0, 0, 0, 0,
@@ -144,12 +144,12 @@ class HumanoidStablePDWholeUpper(object):
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
-            30] + [kd] * 16 + [50, 50, 50, 50,
+            30] + [0.5] * 16 + [50, 50, 50, 50,
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
             30
-        ] + [kd] * 16
+        ] + [0.5] * 16
 
         self._jointIndicesAll = [
             chest, neck, rightHip, rightKnee, rightAnkle, rightShoulder, rightElbow,

@@ -14,6 +14,10 @@ from wandb.integration.sb3 import WandbCallback
 from datetime import datetime
 
 
+def str2int(v):
+    return [int(x) for x in v.split(' ')]
+
+
 def str2bool(v):
     if isinstance(v, bool):
        return v
@@ -42,7 +46,8 @@ def main(args):
 
     policy_kwargs = dict(
         activation_fn=nn.ReLU,
-        net_arch=[dict(pi=[1024, 512], vf=[1024, 512])],
+        net_arch=[dict(pi=[int(x) for x in args.pi.split(" ")],
+                       vf=[int(x) for x in args.vf.split(" ")])],
         log_std_init=args.log_std_init,
         ortho_init=True,
         optimizer_kwargs=dict(weight_decay=args.weight_decay)
@@ -72,8 +77,7 @@ def main(args):
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name, env_kwargs=dict(kp=args.kp, kd=args.kd,
-                                                      renders=False,
+    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False,
                                                       arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir, log_path=log_dir, n_eval_episodes=10,
@@ -87,7 +91,7 @@ def main(args):
     #                    env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
     #                    vec_env_kwargs=dict(start_method='fork'))
     env = DummyVecEnv([lambda: Monitor(gym.make(env_name,
-                                                **dict(kp=args.kp, kd=args.kd, renders=False,
+                                                **dict(renders=False,
                                                        arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")),
                                        log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
@@ -135,8 +139,8 @@ if __name__ == '__main__':
     parser.add_argument('--clip_range', type=float, default=0.2)
     parser.add_argument('--target_kl', type=float, default=0.05)
     parser.add_argument('--seed', type=int, default=8)
-    parser.add_argument('--kp', type=float, default=50)
-    parser.add_argument('--kd', type=float, default=0.6)
+    parser.add_argument('--pi', type=str, default="1024 512")
+    parser.add_argument('--vf', type=str, default="1024 512")
 
     args = parser.parse_args()
 
