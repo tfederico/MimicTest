@@ -8,9 +8,9 @@ command:
   - ${program}
   - ${args}
 method: random
-#metric:
-#  name: eval/mean_reward
-#  goal: maximize
+metric:
+  name: eval/mean_reward
+  goal: maximize
 parameters:
   motion_file:
     values: ["tuning_motion_whole"]

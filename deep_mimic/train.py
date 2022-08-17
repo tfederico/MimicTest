@@ -81,11 +81,11 @@ def main(args):
                                                       arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir, log_path=log_dir, n_eval_episodes=10,
-                                 eval_freq=50000, deterministic=True)
+                                 eval_freq=5000, deterministic=True)
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback, wandb_callback, tensorboard_callback])
 
-    n_envs = 1
+    n_envs = 10
 
     # env = make_vec_env(env_name, n_envs=n_envs, vec_env_cls=SubprocVecEnv, monitor_dir=log_dir,
     #                    env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
