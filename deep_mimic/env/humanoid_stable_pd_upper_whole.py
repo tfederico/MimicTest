@@ -843,7 +843,7 @@ def tune_controller(args):
     timeStep = timeStep
     useFixedBase = False
 
-    _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser, kp=args.kp, kd=args.kd)
+    _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser)
 
     _pybullet_client.setTimeStep(timeStep)
     _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
@@ -863,13 +863,17 @@ def tune_controller(args):
     import time
     from pytorch3d import transforms as t3d
 
+    errors = []
+    body_errors = []
+    hands_errors = []
     rewards = []
-    pos_err = []
+    body_rewards = []
+    hands_rewards = []
+
     steps = range(798)
-    handsJointIndices = list(range(rightWrist, rightPinkyDistal + 1)) + list(range(leftWrist, leftPinkyDistal + 1))
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
-        print(_humanoid._frameNext)
+        # print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
         action = action[7:]
 
@@ -906,7 +910,13 @@ def tune_controller(args):
         kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
         _humanoid.getReward(kinPose)
-        rewards.append(_humanoid._info_err)
+        errors.append(_humanoid._info_err)
+        body_errors.append(_humanoid._info_err["body_pose_err"])
+        hands_errors.append(_humanoid._info_err["hands_pose_err"])
+        rewards.append(_humanoid._info_rew)
+        body_rewards.append(_humanoid._info_rew["body_pose_reward"])
+        hands_rewards.append(_humanoid._info_rew["hands_pose_reward"])
+
         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
 
         maxForces = [
@@ -931,69 +941,19 @@ def tune_controller(args):
         _pybullet_client.stepSimulation()
         time.sleep(timeStep)
 
-        # debug_sim_pose = [simPose[h] for h in handsJointIndices]
-        # debug_kin_pose = [kinPose[h] for h in handsJointIndices]
+    print(sum(body_errors))
+    print(sum(hands_errors))
+    print(sum(body_rewards))
+    print(sum(hands_rewards))
+    print(sum(body_errors)/len(body_errors))
+    print(sum(hands_errors)/len(hands_errors))
+    print(sum(body_rewards)/len(body_rewards))
+    print(sum(hands_rewards)/len(hands_rewards))
 
-        simPose = []
-        simVelocities = []
-        rearranged_kin_pose = []
-        base_index = 7
-        for i, dof in enumerate(dofs):
-            state = _pybullet_client.getJointStateMultiDof(_humanoid._sim_model, i+1)
-            simVelocities.append(state[1])
-            simPose.append(state[0] if len(state[0]) > 0 else kinPose[base_index:base_index+dof])
-            rearranged_kin_pose.append(kinPose[base_index:base_index+dof])
-            base_index += dof
+    pose = sum(body_errors) + sum(hands_errors)
 
-
-        kinPose = rearranged_kin_pose
-
-        for k, s in zip(kinPose, simPose):
-            if len(s) == 4:
-                diffQuat = _pybullet_client.getDifferenceQuaternion(s, k)
-                axis, angle = _pybullet_client.getAxisAngleFromQuaternion(diffQuat)
-                pos_err.append(angle * angle)
-            else:
-                diff = [b-a for a, b in zip(k, s)]
-                pos_err.append(math.sqrt(sum([b*b for b in diff])))
-
-    print(sum(pos_err))
-    # import matplotlib.pyplot as plt
-    #
-    # fig, ax = plt.subplots(2)
-    #
-    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
-    # ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
-    # ax[0].set_ylabel("rad")
-    # ax[0].legend()
-    # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # # ax[0].plot(list(steps), pos_err, color="black")
-    #
-    # # abs_pos_err = [p*p for p in pos_err]
-    # ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
-    # ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
-    # ax[1].set_ylabel("rad/s")
-    # ax[1].set_xlabel("steps")
-    # ax[1].legend()
-    #
-    # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # # ax[1].plot(list(steps), vel_err, color="black")
-    # #
-    # # # ax[2].plot(list(range(len(steps)*8)), rewards)
-    # #
-    # # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
-    # # ax[2].set_ylabel("pose")
-    # # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
-    # # ax[3].set_ylabel("vel")
-    # # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
-    # # ax[4].set_ylabel("end_eff")
-    # # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
-    # # ax[5].set_ylabel("root")
-    # #
-    # plt.show()
-    #
     log = {
-        "pose": sum(pos_err)
+        "pose": pose
     }
 
     wandb.log(log)
