@@ -284,11 +284,14 @@ def main():
     import time
     from pytorch3d import transforms as t3d
     import torch
-    env = WholeDeepMimicSignerBulletEnv(renders=True, kp=10, kd=0.1)
+    env = WholeDeepMimicSignerBulletEnv(renders=True)
     env.reset()
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     rewards = []
-    for i in range(1000):
+    hand_errors = []
+    hand_rewards = []
+    body_errors = []
+    for i in range(480):
         env.render()
 
         #action = env.action_space.sample()
@@ -320,12 +323,22 @@ def main():
         action = env.scale_action(action)
 
         state, reward, done, info = env.step(action)
+
+        hand_errors.append(info['error']['hands_pose_err'])
+        hand_rewards.append(info['reward']['hands_pose_reward'])
+        body_errors.append(info['error']['body_pose_err'])
+
         rewards.append(reward)
         time.sleep(1/240)
     env.close()
-    print(sum(rewards))
-    print(sum(rewards) / len(rewards))
-
+    print("Reward: ", sum(rewards))
+    print("Normalised reward: ", sum(rewards) / len(rewards))
+    print("Hands reward: ", sum(hand_rewards))
+    print("Normalised hand reward: ", sum(hand_rewards) / len(hand_rewards))
+    print("Hands error: ", sum(hand_errors))
+    print("Per-step hands error: ", sum(hand_errors) / len(hand_errors))
+    print("Body error: ", sum(body_errors))
+    print("Per-step body error: ", sum(body_errors) / len(body_errors))
 
 if __name__ == '__main__':
     main()
