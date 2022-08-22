@@ -626,31 +626,31 @@ class HumanoidStablePDWholeUpper(object):
         # from DeepMimic double cSceneImitate::CalcRewardImitate
         # todo: compensate for ground height in some parts, once we move to non-flat terrain
         # not values from the paper, but from the published code.
-        body_w = 0.3
-        hands_w = 0.2
-        body_vel_w = 0.03
-        hands_vel_w = 0.02
-        end_eff_w = 0.15
-        # does not exist in paper
-        root_w = 0.2
-        if self._useComReward:
-            com_w = 0.1
-        else:
-            com_w = 0
-
-        total_w = body_w + hands_w + body_vel_w + hands_vel_w + end_eff_w + root_w + com_w
-        body_w /= total_w
-        hands_w /= total_w
-        body_vel_w /= total_w
-        hands_vel_w /= total_w
-        end_eff_w /= total_w
-        root_w /= total_w
-        com_w /= total_w
+        # body_w = 0.3
+        # hands_w = 0.2
+        # body_vel_w = 0.03
+        # hands_vel_w = 0.02
+        # end_eff_w = 0.15
+        # # does not exist in paper
+        # root_w = 0.2
+        # if self._useComReward:
+        #     com_w = 0.1
+        # else:
+        #     com_w = 0
+        #
+        # total_w = body_w + hands_w + body_vel_w + hands_vel_w + end_eff_w + root_w + com_w
+        # body_w /= total_w
+        # hands_w /= total_w
+        # body_vel_w /= total_w
+        # hands_vel_w /= total_w
+        # end_eff_w /= total_w
+        # root_w /= total_w
+        # com_w /= total_w
 
         body_scale = 2
         hands_scale = 2
         body_vel_scale = 0.1
-        hands_vel_scale = 0.1
+        hands_vel_scale = 0.0001
         end_eff_scale = 40
         root_scale = 5
         com_scale = 10
@@ -749,8 +749,9 @@ class HumanoidStablePDWholeUpper(object):
         root_reward = math.exp(-err_scale * root_scale * root_err)
         com_reward = math.exp(-err_scale * com_scale * com_err)
 
-        reward = body_w * body_reward + body_vel_w * body_vel_reward + hands_w * hands_reward \
-                 + hands_vel_w * hands_vel_reward + end_eff_w * end_eff_reward + root_w * root_reward + com_w * com_reward
+        # reward = body_w * body_reward + body_vel_w * body_vel_reward + hands_w * hands_reward \
+        #          + hands_vel_w * hands_vel_reward + end_eff_w * end_eff_reward + root_w * root_reward + com_w * com_reward
+        reward = body_reward * body_vel_reward * hands_reward * hands_vel_reward * end_eff_reward * root_reward * com_reward
 
         info_rew = dict(
             body_pose_reward=body_reward,

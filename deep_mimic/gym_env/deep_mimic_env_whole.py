@@ -284,13 +284,11 @@ def main():
     import time
     from pytorch3d import transforms as t3d
     import torch
-    env = WholeDeepMimicSignerBulletEnv(renders=True)
+    env = WholeDeepMimicSignerBulletEnv(renders=False)
     env.reset()
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
-    rewards = []
-    hand_errors = []
-    hand_rewards = []
-    body_errors = []
+
+    infos = []
     for i in range(480):
         env.render()
 
@@ -324,21 +322,17 @@ def main():
 
         state, reward, done, info = env.step(action)
 
-        hand_errors.append(info['error']['hands_pose_err'])
-        hand_rewards.append(info['reward']['hands_pose_reward'])
-        body_errors.append(info['error']['body_pose_err'])
+        infos.append(info)
 
-        rewards.append(reward)
-        time.sleep(1/240)
+        # time.sleep(1/240)
     env.close()
-    print("Reward: ", sum(rewards))
-    print("Normalised reward: ", sum(rewards) / len(rewards))
-    print("Hands reward: ", sum(hand_rewards))
-    print("Normalised hand reward: ", sum(hand_rewards) / len(hand_rewards))
-    print("Hands error: ", sum(hand_errors))
-    print("Per-step hands error: ", sum(hand_errors) / len(hand_errors))
-    print("Body error: ", sum(body_errors))
-    print("Per-step body error: ", sum(body_errors) / len(body_errors))
+    print("Reward: ", sum([i['reward']['imitation_reward'] for i in infos]) / len(infos))
+    print("Hand pose reward: ", sum([i['reward']['hands_pose_reward'] for i in infos]) / len(infos))
+    print("Body pose reward: ", sum([i['reward']['body_pose_reward'] for i in infos]) / len(infos))
+    print("Hand velocity reward: ", sum([i['reward']['hands_vel_reward'] for i in infos]) / len(infos))
+    print("Body velocity reward: ", sum([i['reward']['body_vel_reward'] for i in infos]) / len(infos))
+    print("End effector reward: ", sum([i['reward']['end_eff_reward'] for i in infos]) / len(infos))
+    print("Root reward: ", sum([i['reward']['root_reward'] for i in infos]) / len(infos))
 
 if __name__ == '__main__':
     main()
