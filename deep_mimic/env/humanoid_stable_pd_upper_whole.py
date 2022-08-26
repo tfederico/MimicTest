@@ -655,7 +655,7 @@ class HumanoidStablePDWholeUpper(object):
         hands_scale = self.hands_scale
         body_vel_scale = 0.1
         hands_vel_scale = self.hands_vel_scale
-        end_eff_scale = 20
+        end_eff_scale = 40
         root_scale = 5
         com_scale = 10
         err_scale = 1  # error scale
