@@ -20,9 +20,13 @@ class InitializationStrategy(Enum):
 
 class PyBulletDeepMimicEnv(Env):
 
-    def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
+    def __init__(self, hands_scale, hands_vel_scale, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
                  init_strategy=InitializationStrategy.RANDOM, use_com_reward=False):
         super().__init__(arg_parser, enable_draw)
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
+
         self._num_agents = 1
         self._pybullet_client = pybullet_client
         self._isInitialized = False
@@ -63,8 +67,13 @@ class PyBulletDeepMimicEnv(Env):
             self._mocapData.Load(motionPath)
             timeStep = self.timeStep
             useFixedBase = False
-            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData, timeStep,
-                                                                  useFixedBase, self._arg_parser)
+            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(pybullet_client=self._pybullet_client,
+                                                                  mocap_data=self._mocapData, timeStep=timeStep,
+                                                                  useFixedBase=useFixedBase,
+                                                                  arg_parser=self._arg_parser,
+                                                                  useComReward=False,
+                                                                  hands_scale=self.hands_scale,
+                                                                  hands_vel_scale=self.hands_vel_scale)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)

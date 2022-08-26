@@ -15,7 +15,7 @@ parameters:
   motion_file:
     values: ["tuning_motion_whole"]
   glob_n_steps:
-    values: [5000000]
+    values: [10000000]
   log_std_init:
     values: [-3, -1, 1]
   learning_rate:

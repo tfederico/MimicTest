@@ -55,8 +55,12 @@ jointFrictionForce = 0
 
 class HumanoidStablePDWholeUpper(object):
 
-    def __init__(self, pybullet_client, mocap_data, timeStep,
+    def __init__(self, hands_scale, hands_vel_scale, pybullet_client, mocap_data, timeStep,
                  useFixedBase=True, arg_parser=None, useComReward=False):
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
+
         self._pybullet_client = pybullet_client
         self._mocap_data = mocap_data
         self._arg_parser = arg_parser
@@ -648,10 +652,10 @@ class HumanoidStablePDWholeUpper(object):
         com_w /= total_w
 
         body_scale = 2
-        hands_scale = .2
+        hands_scale = self.hands_scale
         body_vel_scale = 0.1
-        hands_vel_scale = 0.0001
-        end_eff_scale = 40
+        hands_vel_scale = self.hands_vel_scale
+        end_eff_scale = 20
         root_scale = 5
         com_scale = 10
         err_scale = 1  # error scale
@@ -673,7 +677,7 @@ class HumanoidStablePDWholeUpper(object):
 
         root_id = 0
 
-        num_end_effs = 0
+        num_end_effs = len(self._end_effectors)
         num_joints = 45
 
         mJointWeights = [1] * num_joints

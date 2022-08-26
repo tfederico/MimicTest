@@ -26,7 +26,7 @@ class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file='', test_mode=False,
+    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -49,6 +49,9 @@ class WholeDeepBulletEnv(gym.Env):
             succ = self._arg_parser.load_file(path)
             Logger.print2(arg_file)
         assert succ, Logger.print2('Failed to load args from: ' + arg_file)
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
 
         self._p = None
         self._time_step = time_step
@@ -188,10 +191,12 @@ class WholeDeepBulletEnv(gym.Env):
                 init_strat = InitializationStrategy.START
             else:
                 init_strat = InitializationStrategy.RANDOM
-            self.internal_env = PyBulletDeepMimicEnv(self._arg_parser, self._renders,
+            self.internal_env = PyBulletDeepMimicEnv(arg_parser=self._arg_parser, enable_draw=self._renders,
                                                      time_step=self._time_step,
                                                      init_strategy=init_strat,
-                                                     use_com_reward=self._use_com_reward
+                                                     use_com_reward=self._use_com_reward,
+                                                     hands_scale=self.hands_scale,
+                                                     hands_vel_scale=self.hands_vel_scale
                                                      )
 
         self.internal_env.reset()
@@ -275,9 +280,9 @@ class WholeDeepBulletEnv(gym.Env):
 class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
+    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
         # start the bullet physics server
-        WholeDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
+        WholeDeepBulletEnv.__init__(self, hands_scale, hands_vel_scale, renders, arg_file, test_mode=test_mode)
 
 
 def main():
