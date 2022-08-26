@@ -92,7 +92,7 @@ class WholeDeepBulletEnv(gym.Env):
             action_bound_min = self.scale_action(action_bound_min)
             action_bound_max = self.scale_action(action_bound_max)
 
-        self.action_space = spaces.Box(action_bound_min, action_bound_max, dtype=np.float32)#CheatingBox(action_bound_min, action_bound_max)
+        self.action_space = CheatingBox(action_bound_min, action_bound_max)
 
         observation_min = np.array([0.0]+[-100.0]+[-4.0]*273+[-500.0]*234)
         observation_max = np.array([1.0]+[100.0]+[4.0]*273+[500.0]*234)
