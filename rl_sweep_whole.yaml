@@ -15,13 +15,13 @@ parameters:
   motion_file:
     values: ["tuning_motion_whole"]
   glob_n_steps:
-    values: [10000000]
+    values: [20000000]
   log_std_init:
-    values: [-3, -1, 1]
+    values: [-3, -1]
+  ortho_init:
+    values: [false, true]
   learning_rate:
-    values: [3.0e-5, 3.0e-6, 3.0e-7]
-  weight_decay:
-    values: [1.0e-4, 1.0e-5, 1.0e-6]
+    values: [6.0e-6, 3.0e-6, 1.0e-6, 100e-7]
   batch_size:
     values: [128, 256, 512]
   n_steps:
@@ -29,12 +29,6 @@ parameters:
   n_epochs:
     values: [3, 5, 10]
   gae_lambda:
-    values: [0.75, 0.85, 0.95]
-  clip_range:
-    values: [0.1, 0.2, 0.3]
-  target_kl:
-    values: [0.05, 0.1, 0.2]
-  pi:
-    values: ["1024 512", "512 1024 512", "512 256"]
-  vf:
-    values: ["1024 512", "512 1024 512", "512 256"]
+    values: [0.85, 0.95]
+  pi_vf:
+    values: ["512 1024 1024 512", "512 1024 512", "256 512 256", "1024 2048 2048 1024"]
