@@ -7,7 +7,7 @@ command:
   - '-m'
   - ${program}
   - ${args}
-method: random
+method: bayes
 metric:
   name: eval/mean_reward
   goal: maximize
