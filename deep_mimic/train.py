@@ -46,10 +46,10 @@ def main(args):
 
     policy_kwargs = dict(
         activation_fn=nn.ReLU,
-        net_arch=[dict(pi=[int(x) for x in args.pi.split(" ")],
-                       vf=[int(x) for x in args.vf.split(" ")])],
+        net_arch=[dict(pi=[int(x) for x in args.pi_vf.split(" ")],
+                       vf=[int(x) for x in args.pi_vf.split(" ")])],
         log_std_init=args.log_std_init,
-        ortho_init=True,
+        ortho_init=args.ortho_init,
         optimizer_kwargs=dict(weight_decay=args.weight_decay)
     )
     model_args = dict(
@@ -143,10 +143,10 @@ if __name__ == '__main__':
     parser.add_argument('--clip_range', type=float, default=0.2)
     parser.add_argument('--target_kl', type=float, default=0.05)
     parser.add_argument('--seed', type=int, default=8)
-    parser.add_argument('--pi', type=str, default="1024 512")
-    parser.add_argument('--vf', type=str, default="1024 512")
+    parser.add_argument('--pi_vf', type=str, default="1024 512")
     parser.add_argument('--hands_scale', type=float, default=0.2) # actual default 2
     parser.add_argument('--hands_vel_scale', type=float, default=0.0001) # actual default 0.1
+    parser.add_argument('--ortho_init', type=bool, default=True)
 
     args = parser.parse_args()
 
