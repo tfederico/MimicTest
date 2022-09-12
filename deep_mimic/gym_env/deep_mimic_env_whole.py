@@ -13,6 +13,7 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 class CheatingBox(gym.spaces.Box):
     def __init__(self, low, high, shape=None, dtype=np.float32):
         super().__init__(low, high, shape, dtype)
@@ -25,9 +26,7 @@ class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-
-
-    def __init__(self, renders=False, arg_file='', test_mode=False,
+    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -45,11 +44,14 @@ class WholeDeepBulletEnv(gym.Env):
         self._arg_parser = ArgParser()
         Logger.print2("===========================================================")
         succ = False
-        if (arg_file != ''):
+        if arg_file != '':
             path = pybullet_data.getDataPath() + "/args/" + arg_file
             succ = self._arg_parser.load_file(path)
             Logger.print2(arg_file)
         assert succ, Logger.print2('Failed to load args from: ' + arg_file)
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
 
         self._p = None
         self._time_step = time_step
@@ -71,7 +73,7 @@ class WholeDeepBulletEnv(gym.Env):
             print("Environment running in TEST mode")
 
         # cam options
-        self._cam_dist = 3
+        self._cam_dist = 1
         self._cam_pitch = -30
         self._cam_yaw = -60
         self._cam_roll = 0
@@ -115,6 +117,11 @@ class WholeDeepBulletEnv(gym.Env):
         std = 1./self._action_scale
         return (action - mean) / (std)
 
+    def unscale_action(self, scaled_action):
+        mean = -self._action_offset
+        std = 1./self._action_scale
+        return scaled_action * std + mean
+
     def scale_observation(self, state):
         mean = -self._state_offset
         std = 1./self._state_scale
@@ -124,11 +131,6 @@ class WholeDeepBulletEnv(gym.Env):
         mean = -self._state_offset
         std = 1./self._state_scale
         return scaled_state * std + mean
-
-    def unscale_action(self, scaled_action):
-        mean = -self._action_offset
-        std = 1./self._action_scale
-        return scaled_action * std + mean
 
     def _configure(self, display=None):
         self.display = display
@@ -189,10 +191,13 @@ class WholeDeepBulletEnv(gym.Env):
                 init_strat = InitializationStrategy.START
             else:
                 init_strat = InitializationStrategy.RANDOM
-            self.internal_env = PyBulletDeepMimicEnv(self._arg_parser, self._renders,
+            self.internal_env = PyBulletDeepMimicEnv(arg_parser=self._arg_parser, enable_draw=self._renders,
                                                      time_step=self._time_step,
                                                      init_strategy=init_strat,
-                                                     use_com_reward=self._use_com_reward)
+                                                     use_com_reward=self._use_com_reward,
+                                                     hands_scale=self.hands_scale,
+                                                     hands_vel_scale=self.hands_vel_scale
+                                                     )
 
         self.internal_env.reset()
         self._p = self.internal_env._pybullet_client
@@ -213,8 +218,6 @@ class WholeDeepBulletEnv(gym.Env):
             state = self.scale_observation(state)
         return state
 
-
-
     def render(self, mode='human', close=False):
         if mode == "human":
             self._renders = True
@@ -228,14 +231,13 @@ class WholeDeepBulletEnv(gym.Env):
         rpy = self._p.getEulerFromQuaternion(orn)  # rpy, in radians
         rpy = 180 / np.pi * np.asarray(rpy)  # convert rpy in degrees
 
-        if (not self._p == None):
-            view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
-                cameraTargetPosition=base_pos,
-                distance=self._cam_dist,
-                yaw=self._cam_yaw,
-                pitch=self._cam_pitch,
-                roll=self._cam_roll,
-                upAxisIndex=1)
+        if self._p:
+            view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
+                                                                    distance=self._cam_dist,
+                                                                    yaw=self._cam_yaw,
+                                                                    pitch=self._cam_pitch,
+                                                                    roll=self._cam_roll,
+                                                                    upAxisIndex=1)
             proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
                                                              aspect=float(self._render_width) / self._render_height,
                                                              nearVal=0.1,
@@ -274,9 +276,68 @@ class WholeDeepBulletEnv(gym.Env):
             cameraPitch=self._cam_pitch,
             cameraTargetPosition=base_pos)
 
+
 class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
+    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
         # start the bullet physics server
-        WholeDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
+        WholeDeepBulletEnv.__init__(self, hands_scale, hands_vel_scale, renders, arg_file, test_mode=test_mode)
+
+
+def main():
+    import time
+    from pytorch3d import transforms as t3d
+    import torch
+    env = WholeDeepMimicSignerBulletEnv(renders=False)
+    env.reset()
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+
+    infos = []
+    for i in range(480):
+        env.render()
+
+        #action = env.action_space.sample()
+        action = env.internal_env._mocapData._motion_data['Frames'][env.internal_env._humanoid._frameNext][8:]
+
+        angle_axis = []
+        base_index = 0
+        i = 0
+        skip = [2, 3, 4, 23, 24, 25]
+        for dof in dofs:
+            if i not in skip:
+                a = action[base_index:base_index + dof]
+                if dof == 4:
+                    a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
+                    norm = math.sqrt(sum([b * b for b in a]))
+                    a = [b / norm for b in a]
+                    a = [norm] + a
+
+                angle_axis.append(a)
+            base_index += dof
+            i += 1
+
+        flat_angle_axis = []
+        for a in angle_axis:
+            flat_angle_axis += a
+
+        action = flat_angle_axis
+
+        action = env.scale_action(action)
+
+        state, reward, done, info = env.step(action)
+
+        infos.append(info)
+
+        # time.sleep(1/240)
+    env.close()
+    print("Reward: ", sum([i['reward']['imitation_reward'] for i in infos]) / len(infos))
+    print("Hand pose reward: ", sum([i['reward']['hands_pose_reward'] for i in infos]) / len(infos))
+    print("Body pose reward: ", sum([i['reward']['body_pose_reward'] for i in infos]) / len(infos))
+    print("Hand velocity reward: ", sum([i['reward']['hands_vel_reward'] for i in infos]) / len(infos))
+    print("Body velocity reward: ", sum([i['reward']['body_vel_reward'] for i in infos]) / len(infos))
+    print("End effector reward: ", sum([i['reward']['end_eff_reward'] for i in infos]) / len(infos))
+    print("Root reward: ", sum([i['reward']['root_reward'] for i in infos]) / len(infos))
+
+if __name__ == '__main__':
+    main()

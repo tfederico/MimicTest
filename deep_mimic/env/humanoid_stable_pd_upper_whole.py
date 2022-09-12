@@ -55,8 +55,12 @@ jointFrictionForce = 0
 
 class HumanoidStablePDWholeUpper(object):
 
-    def __init__(self, pybullet_client, mocap_data, timeStep,
-                 useFixedBase=True, arg_parser=None, useComReward=False, kp=None, kd=None):
+    def __init__(self, hands_scale, hands_vel_scale, pybullet_client, mocap_data, timeStep,
+                 useFixedBase=True, arg_parser=None, useComReward=False):
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
+
         self._pybullet_client = pybullet_client
         self._mocap_data = mocap_data
         self._arg_parser = arg_parser
@@ -129,12 +133,12 @@ class HumanoidStablePDWholeUpper(object):
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
-            300] + [kp] * 16 + [500, 500, 500, 500,
+            300] + [50] * 16 + [500, 500, 500, 500,
             500,
             400, 400, 400, 400,
             400, 400, 400, 400,
             300
-        ] + [kp] * 16
+        ] + [50] * 16
         self._kdOrg = [
             0, 0, 0,
             0, 0, 0, 0,
@@ -144,12 +148,12 @@ class HumanoidStablePDWholeUpper(object):
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
-            30] + [kd] * 16 + [50, 50, 50, 50,
+            30] + [0.5] * 16 + [50, 50, 50, 50,
             50,
             40, 40, 40, 40,
             40, 40, 40, 40,
             30
-        ] + [kd] * 16
+        ] + [0.5] * 16
 
         self._jointIndicesAll = [
             chest, neck, rightHip, rightKnee, rightAnkle, rightShoulder, rightElbow,
@@ -566,82 +570,14 @@ class HumanoidStablePDWholeUpper(object):
         axis, angle = self._pybullet_client.getAxisAngleFromQuaternion(q_diff)
         return angle * angle
 
-    def getReward(self, pose):
-        """Compute and return the pose-based reward."""
-        # from DeepMimic double cSceneImitate::CalcRewardImitate
-        # todo: compensate for ground height in some parts, once we move to non-flat terrain
-        # not values from the paper, but from the published code.
-        pose_w = 0.5
-        vel_w = 0.05
-        end_eff_w = 0.15
-        # does not exist in paper
-        root_w = 0.2
-        if self._useComReward:
-            com_w = 0.1
-        else:
-            com_w = 0
+    def calcSubErrors(self, simJointStates, kinJointStates, linkStatesSim, linkStatesKin, jointIndices, mJointWeights):
 
-        total_w = pose_w + vel_w + end_eff_w + root_w + com_w
-        pose_w /= total_w
-        vel_w /= total_w
-        end_eff_w /= total_w
-        root_w /= total_w
-        com_w /= total_w
-
-        pose_scale = 2
-        vel_scale = 0.1
-        end_eff_scale = 40
-        root_scale = 5
-        com_scale = 10
-        err_scale = 1  # error scale
-
-        reward = 0
-
-        pose_err = 0
-        vel_err = 0
-        end_eff_err = 0
-        root_err = 0
-        com_err = 0
-        heading_err = 0
-
-        if self._useComReward:
-            comSim, comSimVel = self.computeCOMposVel(self._sim_model)
-            comKin, comKinVel = self.computeCOMposVel(self._kin_model)
-
-        root_id = 0
-
+        pose_err = 0.0
+        vel_err = 0.0
+        end_eff_err = 0.0
         num_end_effs = 0
-        num_joints = 45
 
-        mJointWeights = [1] * num_joints
-
-        root_rot_w = mJointWeights[root_id]
-        rootPosSim, rootOrnSim = self._pybullet_client.getBasePositionAndOrientation(self._sim_model)
-        rootPosKin, rootOrnKin = self._pybullet_client.getBasePositionAndOrientation(self._kin_model)
-        linVelSim, angVelSim = self._pybullet_client.getBaseVelocity(self._sim_model)
-        # don't read the velocities from the kinematic model (they are zero), use the pose interpolator velocity
-        # see also issue https://github.com/bulletphysics/bullet3/issues/2401
-        linVelKin = self._poseInterpolator._baseLinVel
-        angVelKin = self._poseInterpolator._baseAngVel
-
-        root_rot_err = self.calcRootRotDiff(rootOrnSim, rootOrnKin)
-        pose_err += root_rot_w * root_rot_err
-
-        root_vel_diff = [
-            linVelSim[0] - linVelKin[0], linVelSim[1] - linVelKin[1], linVelSim[2] - linVelKin[2]
-        ]
-        root_vel_err = root_vel_diff[0] * root_vel_diff[0] + root_vel_diff[1] * root_vel_diff[
-            1] + root_vel_diff[2] * root_vel_diff[2]
-
-        root_ang_vel_err = self.calcRootAngVelErr(angVelSim, angVelKin)
-        vel_err += root_rot_w * root_ang_vel_err
-
-        jointIndices = range(num_joints)
-        simJointStates = self._pybullet_client.getJointStatesMultiDof(self._sim_model, jointIndices)
-        kinJointStates = self._pybullet_client.getJointStatesMultiDof(self._kin_model, jointIndices)
-
-        linkStatesSim = self._pybullet_client.getLinkStates(self._sim_model, jointIndices)
-        linkStatesKin = self._pybullet_client.getLinkStates(self._kin_model, jointIndices)
+        num_joints = len(jointIndices)
 
         for j in range(num_joints):
             curr_pose_err = 0
@@ -670,10 +606,9 @@ class HumanoidStablePDWholeUpper(object):
             pose_err += w * curr_pose_err
             vel_err += w * curr_vel_err
 
-            is_end_eff = j in self._end_effectors
+            is_end_eff = jointIndices[j] in self._end_effectors
 
             if is_end_eff:
-
                 linkStateSim = linkStatesSim[j]
                 linkStateKin = linkStatesKin[j]
 
@@ -688,8 +623,115 @@ class HumanoidStablePDWholeUpper(object):
                 end_eff_err += curr_end_err
                 num_end_effs += 1
 
+        return pose_err, vel_err, end_eff_err, num_end_effs
+
+    def getReward(self, pose):
+        """Compute and return the pose-based reward."""
+        # from DeepMimic double cSceneImitate::CalcRewardImitate
+        # todo: compensate for ground height in some parts, once we move to non-flat terrain
+        # not values from the paper, but from the published code.
+        body_w = 0.3
+        hands_w = 0.2
+        body_vel_w = 0.03
+        hands_vel_w = 0.02
+        end_eff_w = 0.15
+        # does not exist in paper
+        root_w = 0.2
+        if self._useComReward:
+            com_w = 0.1
+        else:
+            com_w = 0
+
+        total_w = body_w + hands_w + body_vel_w + hands_vel_w + end_eff_w + root_w + com_w
+        body_w /= total_w
+        hands_w /= total_w
+        body_vel_w /= total_w
+        hands_vel_w /= total_w
+        end_eff_w /= total_w
+        root_w /= total_w
+        com_w /= total_w
+
+        body_scale = 2
+        hands_scale = self.hands_scale
+        body_vel_scale = 0.1
+        hands_vel_scale = self.hands_vel_scale
+        end_eff_scale = 40
+        root_scale = 5
+        com_scale = 10
+        err_scale = 1  # error scale
+
+        reward = 0
+
+        body_err = 0
+        hands_err = 0
+        body_vel_err = 0
+        hands_vel_err = 0
+        end_eff_err = 0
+        root_err = 0
+        com_err = 0
+        heading_err = 0
+
+        if self._useComReward:
+            comSim, comSimVel = self.computeCOMposVel(self._sim_model)
+            comKin, comKinVel = self.computeCOMposVel(self._kin_model)
+
+        root_id = 0
+
+        num_end_effs = len(self._end_effectors)
+        num_joints = 45
+
+        mJointWeights = [1] * num_joints
+
+        root_rot_w = mJointWeights[root_id]
+        rootPosSim, rootOrnSim = self._pybullet_client.getBasePositionAndOrientation(self._sim_model)
+        rootPosKin, rootOrnKin = self._pybullet_client.getBasePositionAndOrientation(self._kin_model)
+        linVelSim, angVelSim = self._pybullet_client.getBaseVelocity(self._sim_model)
+        # don't read the velocities from the kinematic model (they are zero), use the pose interpolator velocity
+        # see also issue https://github.com/bulletphysics/bullet3/issues/2401
+        linVelKin = self._poseInterpolator._baseLinVel
+        angVelKin = self._poseInterpolator._baseAngVel
+
+        root_rot_err = self.calcRootRotDiff(rootOrnSim, rootOrnKin)
+        body_err += root_rot_w * root_rot_err
+
+        root_vel_diff = [
+            linVelSim[0] - linVelKin[0], linVelSim[1] - linVelKin[1], linVelSim[2] - linVelKin[2]
+        ]
+        root_vel_err = root_vel_diff[0] * root_vel_diff[0] + root_vel_diff[1] * root_vel_diff[
+            1] + root_vel_diff[2] * root_vel_diff[2]
+
+        root_ang_vel_err = self.calcRootAngVelErr(angVelSim, angVelKin)
+        body_vel_err += root_rot_w * root_ang_vel_err
+
+        jointIndices = range(num_joints)
+        bodyJointIndices = list(range(rightWrist)) + list(range(leftHip, leftWrist))
+        handsJointIndices = list(range(rightWrist, rightPinkyDistal+1)) + list(range(leftWrist, leftPinkyDistal+1))
+
+        simJointStates = self._pybullet_client.getJointStatesMultiDof(self._sim_model, jointIndices)
+        kinJointStates = self._pybullet_client.getJointStatesMultiDof(self._kin_model, jointIndices)
+
+        linkStatesSim = self._pybullet_client.getLinkStates(self._sim_model, jointIndices)
+        linkStatesKin = self._pybullet_client.getLinkStates(self._kin_model, jointIndices)
+
+
+
+        body_results = self.calcSubErrors([simJointStates[b] for b in bodyJointIndices],
+                                          [kinJointStates[b] for b in bodyJointIndices],
+                                          [linkStatesSim[b] for b in bodyJointIndices],
+                                          [linkStatesKin[b] for b in bodyJointIndices],
+                                          bodyJointIndices, [mJointWeights[b] for b in bodyJointIndices])
+        body_pose_err, b_vel_err, body_end_eff_err, body_num_end_effs = body_results
+        body_err += body_pose_err
+        body_vel_err += b_vel_err
+        hands_results = self.calcSubErrors([simJointStates[h] for h in handsJointIndices],
+                                           [kinJointStates[h] for h in handsJointIndices],
+                                           [linkStatesSim[h] for h in handsJointIndices],
+                                           [linkStatesKin[h] for h in handsJointIndices],
+                                           handsJointIndices, [mJointWeights[h] for h in handsJointIndices])
+        hands_err, hands_vel_err, hands_end_eff_err, hands_num_end_effs = hands_results
+
         if (num_end_effs > 0):
-            end_eff_err /= num_end_effs
+            end_eff_err = (body_end_eff_err+hands_end_eff_err)/(body_num_end_effs+hands_num_end_effs)
 
         root_pos_diff = [
             rootPosSim[0] - rootPosKin[0], rootPosSim[1] - rootPosKin[1], rootPosSim[2] - rootPosKin[2]
@@ -703,25 +745,35 @@ class HumanoidStablePDWholeUpper(object):
         if self._useComReward:
             com_err = 0.1 * np.sum(np.square(comKinVel - comSimVel))
 
-        pose_reward = math.exp(-err_scale * pose_scale * pose_err)
-        vel_reward = math.exp(-err_scale * vel_scale * vel_err)
+        body_reward = math.exp(-err_scale * body_scale * body_err)
+        hands_reward = math.exp(-err_scale * hands_scale * hands_err)
+        body_vel_reward = math.exp(-err_scale * body_vel_scale * body_vel_err)
+        hands_vel_reward = math.exp(-err_scale * hands_vel_scale * hands_vel_err)
         end_eff_reward = math.exp(-err_scale * end_eff_scale * end_eff_err)
         root_reward = math.exp(-err_scale * root_scale * root_err)
         com_reward = math.exp(-err_scale * com_scale * com_err)
 
-        reward = pose_w * pose_reward + vel_w * vel_reward + end_eff_w * end_eff_reward + root_w * root_reward + com_w * com_reward
+        # reward = body_w * body_reward + body_vel_w * body_vel_reward + hands_w * hands_reward \
+        #          + hands_vel_w * hands_vel_reward + end_eff_w * end_eff_reward + root_w * root_reward + com_w * com_reward
+        reward = body_reward * body_vel_reward * hands_reward * hands_vel_reward * end_eff_reward * root_reward
+        if self._useComReward:
+            reward *= com_reward
 
         info_rew = dict(
-            pose_reward=pose_reward,
-            vel_reward=vel_reward,
+            body_pose_reward=body_reward,
+            body_vel_reward=body_vel_reward,
+            hands_pose_reward=hands_reward,
+            hands_vel_reward=hands_vel_reward,
             end_eff_reward=end_eff_reward,
             root_reward=root_reward,
             imitation_reward=reward
         )
 
         info_errs = dict(
-            pose_err=pose_err,
-            vel_err=vel_err,
+            body_pose_err=body_err,
+            body_vel_err=body_vel_err,
+            hands_pose_err=hands_err,
+            hands_vel_err=hands_vel_err,
             end_eff_err=end_eff_err,
             root_err=root_err,
         )
@@ -798,7 +850,7 @@ def tune_controller(args):
     timeStep = timeStep
     useFixedBase = False
 
-    _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser, kp=args.kp, kd=args.kd)
+    _humanoid = HumanoidStablePDWholeUpper(_pybullet_client, _mocapData, timeStep, useFixedBase, arg_parser)
 
     _pybullet_client.setTimeStep(timeStep)
     _pybullet_client.setPhysicsEngineParameter(numSubSteps=1)
@@ -818,31 +870,27 @@ def tune_controller(args):
     import time
     from pytorch3d import transforms as t3d
 
-    n_joints = _pybullet_client.getNumJoints(_humanoid._sim_model)
-
-    cycle = _mocapData.getCycleTime()
-
-    kin_joint = []
-    sim_joint = []
-    kin_vel = []
-    sim_vel = []
+    errors = []
+    body_errors = []
+    hands_errors = []
     rewards = []
-    steps = range(1400)
 
+    body_rewards = []
+    hands_rewards = []
+
+
+    steps = range(798)
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
         print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
-
         action = action[7:]
-
 
         angle_axis = []
         base_index = 0
-        i = 0
         skip = [2, 3, 4, 23, 24, 25]
-        for dof in dofs:
-            if i not in skip:
+        for j, dof in enumerate(dofs):
+            if j not in skip:
                 a = action[base_index:base_index+dof]
                 if dof == 4:
                     # a = a[1:] + [a[0]]
@@ -853,7 +901,6 @@ def tune_controller(args):
 
                 angle_axis.append(a)
             base_index += dof
-            i += 1
 
         flat_angle_axis = []
         for a in angle_axis:
@@ -862,122 +909,60 @@ def tune_controller(args):
         action = flat_angle_axis
         desired_pose = _humanoid.convertActionToPose(action)
 
-        # desired_pose = desired_pose[7:]
-        # desired_pose = torch.tensor(np.reshape(desired_pose, (-1, 4)))
-        # desired_pose = t3d.quaternion_to_axis_angle(desired_pose).numpy()
-        # desired_pose = np.reshape(desired_pose, (-1))
-        # print(desired_pose)
         desired_pose[:7] = [0] * 7
 
-        for i in range(240//240):
-            _pybullet_client.setTimeStep(timeStep)
-            _humanoid._timeStep = timeStep
-            t += timeStep
-            _humanoid.setSimTime(t)
-            kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-            _humanoid.getReward(kinPose)
-            rewards.append(_humanoid._info_err)
-            _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
+        _pybullet_client.setTimeStep(timeStep)
+        _humanoid._timeStep = timeStep
+        t += timeStep
+        _humanoid.setSimTime(t)
+        kinPose = _humanoid.computePose(_humanoid._frameFraction)
 
-            maxForces = [
-                0, 0, 0,
-                0, 0, 0, 0,
-                200, 200, 200, 200,
-                50, 50, 50, 50,
-                200, 200, 200, 200,
-                150,
-                90, 90, 90, 90,
-                100, 100, 100, 100,
-                60] + [50] * 16 + [
-                200, 200, 200, 200,
-                150,
-                90, 90, 90, 90,
-                100, 100, 100, 100,
-                60
-            ] + [50] * 16
+        _humanoid.getReward(kinPose)
+        errors.append(_humanoid._info_err)
+        body_errors.append(_humanoid._info_err["body_pose_err"])
+        hands_errors.append(_humanoid._info_err["hands_pose_err"])
+        rewards.append(_humanoid._info_rew)
+        body_rewards.append(_humanoid._info_rew["body_pose_reward"])
+        hands_rewards.append(_humanoid._info_rew["hands_pose_reward"])
 
-            _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
+        _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
 
-            _pybullet_client.stepSimulation()
-            time.sleep(1/240)
+        maxForces = [
+            0, 0, 0,
+            0, 0, 0, 0,
+            200, 200, 200, 200,
+            50, 50, 50, 50,
+            200, 200, 200, 200,
+            150,
+            90, 90, 90, 90,
+            100, 100, 100, 100,
+            60] + [50] * 16 + [
+            200, 200, 200, 200,
+            150,
+            90, 90, 90, 90,
+            100, 100, 100, 100,
+            60
+        ] + [50] * 16
 
-        simPose = []
-        simVelocities = []
-        rearranged_kin_pose = []
-        base_index = 7
-        for i, dof in enumerate(dofs):
-            state = _pybullet_client.getJointStateMultiDof(_humanoid._sim_model, i+1)
-            simVelocities.append(state[1])
-            simPose.append(state[0] if len(state[0]) > 0 else kinPose[base_index:base_index+dof])
-            rearranged_kin_pose.append(kinPose[base_index:base_index+dof])
-            base_index += dof
+        _humanoid.computeAndApplyPDForces(desired_pose, maxForces=maxForces)
 
-        # state = _pybullet_client.getJointStates(_humanoid._sim_model, list(range(45)))
+        _pybullet_client.stepSimulation()
+        time.sleep(timeStep)
 
+    print(sum(body_errors))
+    print(sum(hands_errors))
+    print(sum(body_rewards))
+    print(sum(hands_rewards))
+    print(sum(body_errors)/len(body_errors))
+    print(sum(hands_errors)/len(hands_errors))
+    print(sum(body_rewards)/len(body_rewards))
+    print(sum(hands_rewards)/len(hands_rewards))
 
-        # simPose = [s[0] for s in state]
-        kinVelocities = _humanoid._poseInterpolator.GetVelocities()
+    pose = sum(body_errors) + sum(hands_errors)
 
-
-        kinPose = rearranged_kin_pose
-
-        # kin_joint.append(kinPose[7:][:4])
-        # sim_joint.append(simPose[7:][:4])
-        #
-        # kin_vel.append(kinVelocities[7])
-        # sim_vel.append(simVelocities[7])
-
-    pos_err = []
-
-    for k, s in zip(kinPose, simPose):
-        if len(s) == 4:
-            kin = t3d.matrix_to_euler_angles(t3d.quaternion_to_matrix(torch.tensor(k)), "XYZ").numpy()
-            sim = t3d.matrix_to_euler_angles(t3d.quaternion_to_matrix(torch.tensor(s)), "XYZ").numpy()
-            diff = kin - sim
-            diff = math.sqrt(sum([b*b for b in diff]))
-            pos_err.append(diff)
-        else:
-            diff = [b-a for a, b in zip(k, s)]
-            pos_err.append(math.sqrt(sum([b*b for b in diff])))
-
-    print(sum(pos_err))
-    # import matplotlib.pyplot as plt
-    #
-    # fig, ax = plt.subplots(2)
-    #
-    # ax[0].plot(list(range(len(steps))), kin_joint, color="blue", label="Reference")
-    # ax[0].plot(list(range(len(steps))), sim_joint, color="orange", label="Simulation")
-    # ax[0].set_ylabel("rad")
-    # ax[0].legend()
-    # pos_err = [k - s for k, s in zip(kin_joint, sim_joint)]
-    # # ax[0].plot(list(steps), pos_err, color="black")
-    #
-    # # abs_pos_err = [p*p for p in pos_err]
-    # ax[1].plot(list(range(len(steps))), kin_vel, color="blue", label="Reference")
-    # ax[1].plot(list(range(len(steps))), sim_vel, color="orange", label="Simulation")
-    # ax[1].set_ylabel("rad/s")
-    # ax[1].set_xlabel("steps")
-    # ax[1].legend()
-    #
-    # vel_err = [k - s for k, s in zip(kin_vel, sim_vel)]
-    # # ax[1].plot(list(steps), vel_err, color="black")
-    # #
-    # # # ax[2].plot(list(range(len(steps)*8)), rewards)
-    # #
-    # # ax[2].plot(list(range(len(steps))), [r['pose_err'] for r in rewards])
-    # # ax[2].set_ylabel("pose")
-    # # ax[3].plot(list(range(len(steps))), [r['vel_err'] for r in rewards])
-    # # ax[3].set_ylabel("vel")
-    # # ax[4].plot(list(range(len(steps))), [r['end_eff_err'] for r in rewards])
-    # # ax[4].set_ylabel("end_eff")
-    # # ax[5].plot(list(range(len(steps))), [r['root_err'] for r in rewards])
-    # # ax[5].set_ylabel("root")
-    # #
-    # plt.show()
-    #
     log = {
-        "pose": sum(pos_err),
+        "pose": pose
     }
 
     wandb.log(log)

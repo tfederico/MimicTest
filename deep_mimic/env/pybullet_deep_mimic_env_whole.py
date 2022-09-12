@@ -20,11 +20,13 @@ class InitializationStrategy(Enum):
 
 class PyBulletDeepMimicEnv(Env):
 
-    def __init__(self, arg_parser=None, enable_draw=False, pybullet_client=None,
-                 time_step=1./240,
-                 init_strategy=InitializationStrategy.RANDOM,
-                 use_com_reward=False):
+    def __init__(self, hands_scale, hands_vel_scale, arg_parser=None, enable_draw=False, pybullet_client=None, time_step=1./240,
+                 init_strategy=InitializationStrategy.RANDOM, use_com_reward=False):
         super().__init__(arg_parser, enable_draw)
+
+        self.hands_scale = hands_scale
+        self.hands_vel_scale = hands_vel_scale
+
         self._num_agents = 1
         self._pybullet_client = pybullet_client
         self._isInitialized = False
@@ -65,8 +67,13 @@ class PyBulletDeepMimicEnv(Env):
             self._mocapData.Load(motionPath)
             timeStep = self.timeStep
             useFixedBase = False
-            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(self._pybullet_client, self._mocapData,
-                                                                timeStep, useFixedBase, self._arg_parser, kd=9, kp=900)
+            self._humanoid = stable_pd.HumanoidStablePDWholeUpper(pybullet_client=self._pybullet_client,
+                                                                  mocap_data=self._mocapData, timeStep=timeStep,
+                                                                  useFixedBase=useFixedBase,
+                                                                  arg_parser=self._arg_parser,
+                                                                  useComReward=False,
+                                                                  hands_scale=self.hands_scale,
+                                                                  hands_vel_scale=self.hands_vel_scale)
             self._isInitialized = True
 
             self._pybullet_client.setTimeStep(timeStep)
@@ -110,8 +117,8 @@ class PyBulletDeepMimicEnv(Env):
     def get_state_size(self, agent_id):
         #cCtController::GetStateSize()
         #int state_size = cDeepMimicCharController::GetStateSize();
-        #                     state_size += GetStatePoseSize();#(4+3)*(9+15+15) + 1 = 274
-        #                     state_size += GetStateVelSize(); #(4+3-1)*(9+15+15) = 234
+        #                     state_size += GetStatePoseSize();#(4+3)*(7+16+16) + 1 = 274
+        #                     state_size += GetStateVelSize(); #(4+3-1)*(7+16+16) = 234
         #state_size += GetStatePhaseSize();#1
         return 509
 
@@ -150,21 +157,49 @@ class PyBulletDeepMimicEnv(Env):
         return np.array([])
 
     def build_action_offset(self, agent_id):
-        out_offset = [0] * self.get_action_size(agent_id)
+        # out_offset = []
+        # dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
+        # lows = self.build_action_bound_min(-1)
+        # highs = self.build_action_bound_max(-1)
+        #
+        # for i, dof in enumerate(dofs):
+        #     if dof == 4:
+        #         out_offset += [0.0, 0.0, 0.0, -0.2]
+        #     else:
+        #         out_offset.append(-0.5*(highs[i]+lows[i]))
         out_offset = [
-            -0.5 * (up + low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
-        ]
-        #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
-        #see cCtCtrlUtil::BuildOffsetScalePDSpherical
+            0.0000000000, 0.0000000000, 0.0000000000, -0.200000000,
+            0.0000000000, 0.0000000000, 0.0000000000, -0.200000000,
+            0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            -1.5700000
+        ] + [-0.785] * 16 + [
+            0.00000000, 0.00000000, 0.00000000, -0.2000000,
+            -1.5700000
+        ] + [-0.785] * 16
         return np.array(out_offset)
 
     def build_action_scale(self, agent_id):
-        out_scale = [1] * self.get_action_size(agent_id)
-        #see cCtCtrlUtil::BuildOffsetScalePDPrismatic and
-        #see cCtCtrlUtil::BuildOffsetScalePDSpherical
+        # out_scale = []
+        # dofs = [4, 4, 4, 1] + [1] * 16 + [4, 1] + [1] * 16
+        # lows = self.build_action_bound_min(-1)
+        # highs = self.build_action_bound_max(-1)
+        # base_dof = 0
+        # for i, dof in enumerate(dofs):
+        #     if dof == 4:
+        #         out_scale += [0.5/(highs[base_dof+k] - lows[base_dof+k]) for k in range(4)]
+        #     else:
+        #         out_scale.append(2/(highs[base_dof]-lows[base_dof]))
+        #     base_dof += dof
+        # # out_scale = [2/(h - l) for l, h in zip(lows, highs)]
         out_scale = [
-            0.5/(up - low) for up, low in zip(self.build_action_bound_max(-1), self.build_action_bound_min(-1))
-        ]
+            0.20833333333333, 1.00000000000000, 1.00000000000000, 1.00000000000000,
+            0.25000000000000, 1.00000000000000, 1.00000000000000, 1.00000000000000,
+            0.079617834394, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.159235668789
+        ] + [0.31847133758] * 16 + [
+            0.079617834394, 1.000000000000, 1.000000000000, 1.000000000000,
+            0.159235668789
+        ] + [0.31847133758] * 16
         return np.array(out_scale)
 
     def build_action_bound_min(self, agent_id):
@@ -173,18 +208,12 @@ class PyBulletDeepMimicEnv(Env):
         out_scale = [
             -4.79999999999, -1.00000000000, -1.00000000000, -1.00000000000,
             -4.00000000000, -1.00000000000, -1.00000000000, -1.00000000000,
-            # -7.77999999999, -1.00000000000, -1.000000000, -1.000000000,
-            # -7.850000000,
-            # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
             -12.56000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [0] * 16 + [
-            # -7.779999999, -1.000000000, -1.000000000, -1.000000000,
-            # -7.850000000,
-            # -6.280000000, -1.000000000, -1.000000000, -1.000000000,
-            -8.460000000, -1.000000000, -1.000000000, -1.000000000,
+        ] + [-2.355] * 16 + [
+            -12.56000000, -1.000000000, -1.000000000, -1.000000000,
             -4.710000000
-        ] + [0] * 16
+        ] + [-2.355] * 16
 
         return out_scale
 
@@ -193,18 +222,12 @@ class PyBulletDeepMimicEnv(Env):
         out_scale = [
             4.799999999, 1.000000000, 1.000000000, 1.000000000,
             4.000000000, 1.000000000, 1.000000000, 1.000000000,
-            # 8.779999999, 1.000000000, 1.0000000, 1.0000000,
-            # 4.7100000,
-            # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
             12.560000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [1.57] * 16 + [
-            # 8.7799999, 1.0000000, 1.0000000, 1.0000000,
-            # 4.7100000,
-            # 6.2800000, 1.0000000, 1.0000000, 1.0000000,
-            10.100000, 1.0000000, 1.0000000, 1.0000000,
+        ] + [3.925] * 16 + [
+            12.560000, 1.0000000, 1.0000000, 1.0000000,
             7.8500000
-        ] + [1.57] * 16
+        ] + [3.925] * 16
         return out_scale
 
     def set_mode(self, mode):
@@ -321,7 +344,7 @@ def test_pybullet():
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1. / 240
+    timeStep = 1. / 30
     _init_strategy = InitializationStrategy.START
 
     env = PyBulletDeepMimicEnv(arg_parser=arg_parser, enable_draw=True, pybullet_client=None,
@@ -335,10 +358,7 @@ def test_pybullet():
     actions = []
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
-        # print(_humanoid._frameNext)
-        action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][1:]
-
-        action = action[7:]
+        action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][8:]
 
         angle_axis = []
         base_index = 0
@@ -348,7 +368,6 @@ def test_pybullet():
             if i not in skip:
                 a = action[base_index:base_index + dof]
                 if dof == 4:
-                    # a = a[1:] + [a[0]]
                     a = t3d.quaternion_to_axis_angle(torch.unsqueeze(torch.tensor(a), 0)).numpy().tolist()[0]
                     norm = math.sqrt(sum([b * b for b in a]))
                     a = [b / norm for b in a]
@@ -367,7 +386,7 @@ def test_pybullet():
         env.set_action(0, action)
 
         env.update(timeStep)
-        time.sleep(1/240)
+        time.sleep(1/30)
 
     actions = np.array(actions)
 

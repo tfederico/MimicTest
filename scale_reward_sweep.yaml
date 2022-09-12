@@ -1,0 +1,22 @@
+entity: mrroboto
+project: tune_whole
+program: deep_mimic.train
+command:
+  - ${env}
+  - ${interpreter}
+  - '-m'
+  - ${program}
+  - ${args}
+method: random
+metric:
+  name: eval/mean_reward
+  goal: maximize
+parameters:
+  motion_file:
+    values: ["tuning_motion_whole"]
+  glob_n_steps:
+    values: [10000000]
+  hands_scale:
+    values: [2, 1, 0.5, 0.2]
+  hands_vel_scale:
+    values: [0.1, 0.01, 0.001, 0.0001]
