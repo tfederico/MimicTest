@@ -8,18 +8,8 @@ import data as pybullet_data
 from deep_mimic.env.pybullet_deep_mimic_env_whole import PyBulletDeepMimicEnv, InitializationStrategy
 from pybullet_utils.arg_parser import ArgParser
 from pybullet_utils.logger import Logger
-from scipy.stats import truncnorm
-import wandb
 
 logger = logging.getLogger(__name__)
-
-
-class CheatingBox(gym.spaces.Box):
-    def __init__(self, low, high, shape=None, dtype=np.float32):
-        super().__init__(low, high, shape, dtype)
-
-    def sample(self):
-        return truncnorm.rvs(self.low, self.high, size=self.shape[0])
 
 
 class WholeDeepBulletEnv(gym.Env):
@@ -75,7 +65,7 @@ class WholeDeepBulletEnv(gym.Env):
         # cam options
         self._cam_dist = 1
         self._cam_pitch = -30
-        self._cam_yaw = -60
+        self._cam_yaw = -90
         self._cam_roll = 0
 
         self.reset()
@@ -95,7 +85,7 @@ class WholeDeepBulletEnv(gym.Env):
             action_bound_min = self.scale_action(action_bound_min)
             action_bound_max = self.scale_action(action_bound_max)
 
-        self.action_space = CheatingBox(action_bound_min, action_bound_max)
+        self.action_space = spaces.Box(action_bound_min, action_bound_max)
 
         observation_min = np.array([0.0]+[-100.0]+[-4.0]*273+[-500.0]*234)
         observation_max = np.array([1.0]+[100.0]+[4.0]*273+[500.0]*234)
@@ -265,8 +255,7 @@ class WholeDeepBulletEnv(gym.Env):
         """Update the debug visualizer camera."""
         # update camera
         hand = self.internal_env._humanoid
-        base_pos, base_orn = self._p.getBasePositionAndOrientation(
-            hand._sim_model)
+        base_pos, base_orn = self._p.getBasePositionAndOrientation(hand._sim_model)
         debug_caminfo = self._p.getDebugVisualizerCamera()
         (yaw, pitch, cur_dist) = debug_caminfo[8:11]
         # self._cam_dist = cur_dist
@@ -285,11 +274,12 @@ class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
         WholeDeepBulletEnv.__init__(self, hands_scale, hands_vel_scale, renders, arg_file, test_mode=test_mode)
 
 
-def main():
+def main(filename):
     import time
     from pytorch3d import transforms as t3d
     import torch
-    env = WholeDeepMimicSignerBulletEnv(renders=False)
+    env = WholeDeepMimicSignerBulletEnv(renders=True, hands_scale=0.2, hands_vel_scale=0.0001,
+                                        arg_file=f"run_humanoid3d_{filename}_args.txt", test_mode=True)
     env.reset()
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
 
@@ -329,7 +319,7 @@ def main():
 
         infos.append(info)
 
-        # time.sleep(1/240)
+        time.sleep(1/240)
     env.close()
     print("Reward: ", sum([i['reward']['imitation_reward'] for i in infos]) / len(infos))
     print("Hand pose reward: ", sum([i['reward']['hands_pose_reward'] for i in infos]) / len(infos))
@@ -339,5 +329,7 @@ def main():
     print("End effector reward: ", sum([i['reward']['end_eff_reward'] for i in infos]) / len(infos))
     print("Root reward: ", sum([i['reward']['root_reward'] for i in infos]) / len(infos))
 
+
 if __name__ == '__main__':
-    main()
+    import sys
+    main(sys.argv[1])
