@@ -83,14 +83,19 @@ args = parser.parse_args()
 # }
 
 dirs = {
-    "tuning_motion_whole": "2022-09-01 14:30:48.817682"
+    "tuning_motion_whole": "2022-09-01 14:30:48.817682",
+    "00433": "2022-11-02 09:59:47.226551", #"2022-10-24 16:00:23.254204",  # "2022-10-20 14:27:10.251318",
+    "52861": "2022-11-02 09:59:45.739750", #"2022-10-24 16:00:43.085142",  # "2022-10-20 14:27:52.137148",
+    "69318": "",
+    "69402": "",
+    "69546": ""
 }
 
 
 log_dir = f"output/{dirs[args.motion_file]}/"
 env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
-env = make_vec_env(env_name, env_kwargs=dict(renders=True, hands_scale=0.2, hands_vel_scale=0.0001, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt", test_mode=True))
+env = make_vec_env(env_name, env_kwargs=dict(renders=True, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt", test_mode=True))
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
 
 model = PPO.load(log_dir+"best_model", env=env)

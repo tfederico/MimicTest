@@ -77,9 +77,7 @@ def main(args):
     tensorboard_callback = TensorboardCallback(verbose=0)
     wandb_callback = WandbCallback()
     # Separate evaluation env
-    eval_env = make_vec_env(env_name, env_kwargs=dict(hands_scale=args.hands_scale,
-                                                      hands_vel_scale=args.hands_vel_scale,
-                                                      renders=False,
+    eval_env = make_vec_env(env_name, env_kwargs=dict(renders=False,
                                                       arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"))
     eval_env = VecNormalize(eval_env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
     eval_callback = EvalCallback(eval_env, best_model_save_path=log_dir, log_path=log_dir, n_eval_episodes=10,
@@ -93,9 +91,7 @@ def main(args):
     #                    env_kwargs=dict(renders=False, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt"),
     #                    vec_env_kwargs=dict(start_method='fork'))
     env = DummyVecEnv([lambda: Monitor(gym.make(env_name,
-                                                **dict(hands_scale=args.hands_scale,
-                                                       hands_vel_scale=args.hands_vel_scale,
-                                                       renders=False,
+                                                **dict(renders=False,
                                                        arg_file=f"run_humanoid3d_{args.motion_file}_args.txt")),
                                        log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
@@ -144,8 +140,6 @@ if __name__ == '__main__':
     parser.add_argument('--target_kl', type=float, default=0.05)
     parser.add_argument('--seed', type=int, default=8)
     parser.add_argument('--pi_vf', type=str, default="1024 512")
-    parser.add_argument('--hands_scale', type=float, default=0.2) # actual default 2
-    parser.add_argument('--hands_vel_scale', type=float, default=0.0001) # actual default 0.1
     parser.add_argument('--ortho_init', type=bool, default=True)
 
     args = parser.parse_args()

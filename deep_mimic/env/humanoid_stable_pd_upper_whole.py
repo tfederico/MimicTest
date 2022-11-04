@@ -55,11 +55,8 @@ jointFrictionForce = 0
 
 class HumanoidStablePDWholeUpper(object):
 
-    def __init__(self, hands_scale, hands_vel_scale, pybullet_client, mocap_data, timeStep,
+    def __init__(self, pybullet_client, mocap_data, timeStep,
                  useFixedBase=True, arg_parser=None, useComReward=False):
-
-        self.hands_scale = hands_scale
-        self.hands_vel_scale = hands_vel_scale
 
         self._pybullet_client = pybullet_client
         self._mocap_data = mocap_data
@@ -124,7 +121,7 @@ class HumanoidStablePDWholeUpper(object):
 
         self._stablePD = pd_controller_stable.PDControllerStableMultiDof(self._pybullet_client)
         self._timeStep = timeStep
-        self._kpOrg = [ # TODO: make these parameters
+        self._kpOrg = [
             0, 0, 0,
             0, 0, 0, 0,
             1000, 1000, 1000, 1000,
@@ -146,13 +143,13 @@ class HumanoidStablePDWholeUpper(object):
             10, 10, 10, 10,
             50, 50, 50, 50,
             50,
-            40, 40, 40, 40,
-            40, 40, 40, 40,
-            30] + [0.5] * 16 + [50, 50, 50, 50,
+            8, 8, 8, 8,
+            8, 8, 8, 8,
+            6] + [0.5] * 16 + [50, 50, 50, 50,
             50,
-            40, 40, 40, 40,
-            40, 40, 40, 40,
-            30
+            8, 8, 8, 8,
+            8, 8, 8, 8,
+            6
         ] + [0.5] * 16
 
         self._jointIndicesAll = [
@@ -652,9 +649,9 @@ class HumanoidStablePDWholeUpper(object):
         com_w /= total_w
 
         body_scale = 2
-        hands_scale = self.hands_scale
-        body_vel_scale = 0.1
-        hands_vel_scale = self.hands_vel_scale
+        hands_scale = 0.2
+        body_vel_scale = 0.005
+        hands_vel_scale = 0.0001
         end_eff_scale = 40
         root_scale = 5
         com_scale = 10
@@ -808,22 +805,16 @@ class HumanoidStablePDWholeUpper(object):
         return com_pos, com_vel
 
 
-def tune_controller(args):
+def tune_controller():
     import pybullet as p1
     from pybullet_utils import bullet_client
     import data as pybullet_data
     from pybullet_utils.arg_parser import ArgParser
     from deep_mimic.env.pybullet_deep_mimic_env_hand import InitializationStrategy
     from deep_mimic.env import motion_capture_data
-    import time
-    import wandb
-    from pytorch3d import transforms as t3d
 
 
-    wandb.init(config=args)
-    args = wandb.config
-
-    arg_file = "run_humanoid3d_tuning_motion_whole_args.txt"
+    arg_file = "run_humanoid3d_00433_args.txt"
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
@@ -876,6 +867,10 @@ def tune_controller(args):
     rewards = []
     body_rewards = []
     hands_rewards = []
+    body_vel_errors = []
+    hands_vel_errors = []
+    body_vel_rewards = []
+    hands_vel_rewards = []
 
     steps = range(798)
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
@@ -923,6 +918,10 @@ def tune_controller(args):
         rewards.append(_humanoid._info_rew)
         body_rewards.append(_humanoid._info_rew["body_pose_reward"])
         hands_rewards.append(_humanoid._info_rew["hands_pose_reward"])
+        body_vel_errors.append(_humanoid._info_err["body_vel_err"])
+        hands_vel_errors.append(_humanoid._info_err["hands_vel_err"])
+        body_vel_rewards.append(_humanoid._info_rew["body_vel_reward"])
+        hands_vel_rewards.append(_humanoid._info_rew["hands_vel_reward"])
 
         _humanoid.initializePose(_humanoid._poseInterpolator, _humanoid._kin_model, initBase=True)
 
@@ -948,32 +947,29 @@ def tune_controller(args):
         _pybullet_client.stepSimulation()
         time.sleep(timeStep)
 
-    print(sum(body_errors))
-    print(sum(hands_errors))
-    print(sum(body_rewards))
-    print(sum(hands_rewards))
-    print(sum(body_errors)/len(body_errors))
-    print(sum(hands_errors)/len(hands_errors))
-    print(sum(body_rewards)/len(body_rewards))
-    print(sum(hands_rewards)/len(hands_rewards))
+    print("Body error (sum):", sum(body_errors))
+    print("Hands error (sum):", sum(hands_errors))
+    print("Body rew (sum):", sum(body_rewards))
+    print("Hands rew (sum):", sum(hands_rewards))
+    print("Body error (avg):", sum(body_errors)/len(body_errors))
+    print("Hands error (avg):", sum(hands_errors)/len(hands_errors))
+    print("Body rew (avg):", sum(body_rewards)/len(body_rewards))
+    print("Hands rew (avg):", sum(hands_rewards)/len(hands_rewards))
+
+    print("Velocity")
+    print("Body error (sum):", sum(body_vel_errors))
+    print("Hands error (sum):", sum(hands_vel_errors))
+    print("Body rew (sum):", sum(body_vel_rewards))
+    print("Hands rew (sum):", sum(hands_vel_rewards))
+    print("Body error (avg):", sum(body_vel_errors)/len(body_vel_errors))
+    print("Hands error (avg):", sum(hands_vel_errors)/len(hands_vel_errors))
+    print("Body rew (avg):", sum(body_vel_rewards)/len(body_vel_rewards))
+    print("Hands rew (avg):", sum(hands_vel_rewards)/len(hands_vel_rewards))
 
     pose = sum(body_errors) + sum(hands_errors)
-
-    log = {
-        "pose": pose
-    }
-
-    wandb.log(log)
 
     _pybullet_client.disconnect()
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--kp', type=float)
-    parser.add_argument('--kd', type=float)
-
-    args = parser.parse_args()
-    tune_controller(args)
+    tune_controller()

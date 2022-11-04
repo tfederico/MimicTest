@@ -16,7 +16,7 @@ class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file='', test_mode=False,
+    def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240,
                  rescale_actions=True,
                  rescale_observations=True,
@@ -40,8 +40,6 @@ class WholeDeepBulletEnv(gym.Env):
             Logger.print2(arg_file)
         assert succ, Logger.print2('Failed to load args from: ' + arg_file)
 
-        self.hands_scale = hands_scale
-        self.hands_vel_scale = hands_vel_scale
 
         self._p = None
         self._time_step = time_step
@@ -184,10 +182,7 @@ class WholeDeepBulletEnv(gym.Env):
             self.internal_env = PyBulletDeepMimicEnv(arg_parser=self._arg_parser, enable_draw=self._renders,
                                                      time_step=self._time_step,
                                                      init_strategy=init_strat,
-                                                     use_com_reward=self._use_com_reward,
-                                                     hands_scale=self.hands_scale,
-                                                     hands_vel_scale=self.hands_vel_scale
-                                                     )
+                                                     use_com_reward=self._use_com_reward)
 
         self.internal_env.reset()
         self._p = self.internal_env._pybullet_client
@@ -269,16 +264,16 @@ class WholeDeepBulletEnv(gym.Env):
 class WholeDeepMimicSignerBulletEnv(WholeDeepBulletEnv):
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
-    def __init__(self, hands_scale, hands_vel_scale, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
+    def __init__(self, renders=False, arg_file="run_humanoid3d_tuning_motion_whole_args.txt", test_mode=False):
         # start the bullet physics server
-        WholeDeepBulletEnv.__init__(self, hands_scale, hands_vel_scale, renders, arg_file, test_mode=test_mode)
+        WholeDeepBulletEnv.__init__(self, renders, arg_file, test_mode=test_mode)
 
 
 def main(filename):
     import time
     from pytorch3d import transforms as t3d
     import torch
-    env = WholeDeepMimicSignerBulletEnv(renders=True, hands_scale=0.2, hands_vel_scale=0.0001,
+    env = WholeDeepMimicSignerBulletEnv(renders=True,
                                         arg_file=f"run_humanoid3d_{filename}_args.txt", test_mode=True)
     env.reset()
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
