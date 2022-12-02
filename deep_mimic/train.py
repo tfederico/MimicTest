@@ -2,7 +2,7 @@ import os
 import gym
 import torch.nn as nn
 from stable_baselines3 import PPO
-from stable_baselines3.common.cmd_util import make_vec_env
+from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 from stable_baselines3.common.monitor import Monitor
 from deep_mimic.gym_env.custom_callbacks import ProgressBarManager, TensorboardCallback
