@@ -1,5 +1,5 @@
 entity: mrroboto
-project: test
+project: mult_sweep
 program: deep_mimic.train
 command:
   - ${env}
@@ -7,28 +7,28 @@ command:
   - '-m'
   - ${program}
   - ${args}
-method: grid
+method: bayes
 metric:
   name: eval/mean_reward
   goal: maximize
 parameters:
   motion_file:
-    values: ["tuning_motion_whole"]
+    values: ["69318"]
   glob_n_steps:
     values: [25000000]
-#  log_std_init:
-#    values: [-3, -1]
-#  ortho_init:
-#    values: [false, true]
+  log_std_init:
+    values: [-3, -1]
+  ortho_init:
+    values: [true]
   learning_rate:
-    values: [1.0e-4, 1.0e-5, 3.0e-6, 1.0e-6, 1.0e-5, 1.0e-6, 1.0e-7]
-#  batch_size:
-#    values: [128, 256, 512]
-#  n_steps:
-#    values: [512, 1024, 4096]
-#  n_epochs:
-#    values: [3, 5, 10]
-#  gae_lambda:
-#    values: [0.85, 0.95]
-#  pi_vf:
-#    values: ["512 1024 1024 512", "512 1024 512", "256 512 256", "1024 2048 2048 1024"]
+    values: [3.0e-5, 3.0e-6, 1.0e-6, 3.0-7]
+  batch_size:
+    values: [128, 256, 512]
+  n_steps:
+    values: [512, 1024, 4096]
+  n_epochs:
+    values: [3, 5, 10]
+  gae_lambda:
+    values: [0.85, 0.95]
+  pi_vf:
+    values: ["512 1024 1024 512", "512 1024 512", "256 512 256", "1024 2048 2048 1024"]
