@@ -139,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument('--clip_range', type=float, default=0.2)
     parser.add_argument('--target_kl', type=float, default=0.05)
     parser.add_argument('--seed', type=int, default=8)
-    parser.add_argument('--pi_vf', type=str, default="1024 512")
+    parser.add_argument('--pi_vf', type=str, default="512 1024 512")
     parser.add_argument('--ortho_init', type=bool, default=True)
 
     args = parser.parse_args()
