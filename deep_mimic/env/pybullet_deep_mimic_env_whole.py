@@ -349,11 +349,13 @@ def test_pybullet():
                                use_com_reward=False)
 
 
-    steps = range(1400)
-    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
+    steps = range(700)
+
     actions = []
+    dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
         action = env._mocapData._motion_data['Frames'][env._humanoid._frameNext][8:]
+
         angle_axis = []
         base_index = 0
         i = 0

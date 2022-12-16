@@ -95,7 +95,9 @@ dirs = {
 log_dir = f"output/{dirs[args.motion_file]}/"
 env_name = 'WholeDeepMimicSignerBulletEnv-v1'
 
+
 env = make_vec_env(env_name, env_kwargs=dict(renders=True, arg_file=f"run_humanoid3d_{args.motion_file}_args.txt", test_mode=True))
+
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
 
 model = PPO.load(log_dir+"best_model", env=env)

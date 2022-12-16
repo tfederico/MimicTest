@@ -865,6 +865,7 @@ def tune_controller():
     body_errors = []
     hands_errors = []
     rewards = []
+
     body_rewards = []
     hands_rewards = []
     body_vel_errors = []
@@ -872,10 +873,11 @@ def tune_controller():
     body_vel_rewards = []
     hands_vel_rewards = []
 
+
     steps = range(798)
     dofs = [4, 4, 4, 1, 4, 4, 1] + [1] * 16 + [4, 1, 4, 4, 1] + [1] * 16
     for i in steps:
-        # print(_humanoid._frameNext)
+        print(_humanoid._frameNext)
         action = _mocapData._motion_data['Frames'][_humanoid._frameNext][1:]
         action = action[7:]
 
