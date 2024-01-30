@@ -1,7 +1,8 @@
 import os
 import gym
 import torch.nn as nn
-from stable_baselines3 import PPO
+import torch
+from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 from stable_baselines3.common.monitor import Monitor
@@ -20,7 +21,7 @@ def str2int(v):
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -46,29 +47,26 @@ def main(args):
 
     policy_kwargs = dict(
         activation_fn=nn.ReLU,
-        net_arch=[dict(pi=[int(x) for x in args.pi_vf.split(" ")],
-                       vf=[int(x) for x in args.pi_vf.split(" ")])],
+        net_arch=[int(x) for x in args.pi_vf.split(" ")],
         log_std_init=args.log_std_init,
-        ortho_init=args.ortho_init,
+        optimizer_class=torch.optim.AdamW,
         optimizer_kwargs=dict(weight_decay=args.weight_decay)
     )
     model_args = dict(
         norm_reward=False,
         norm_obs=True,
         learning_rate=args.learning_rate,
-        n_steps=args.n_steps,
+        buffer_size=args.buffer_size,
+        learning_starts=args.learning_starts,
         batch_size=args.batch_size,
-        n_epochs=args.n_epochs,
-        gamma=0.95,
-        gae_lambda=args.gae_lambda,
-        clip_range=args.clip_range,
-        ent_coef=0,
-        vf_coef=5.,
-        max_grad_norm=100.,
-        target_kl=args.target_kl,
+        tau=args.tau,
+        train_freq=args.train_freq,
+        gradient_steps=args.gradient_steps,
+        ent_coef=args.ent_coef,
+        target_entropy=args.target_entropy,
+        gamma=0.99,
         tensorboard_log=log_dir,
-        policy_kwargs=policy_kwargs,
-        seed=args.seed
+        seed=args.seed,
     )
 
     env_name = 'WholeDeepMimicSignerBulletEnv-v1'
@@ -96,22 +94,20 @@ def main(args):
                                        log_dir) for _ in range(n_envs)])
     env = VecNormalize(env, norm_reward=model_args['norm_reward'], norm_obs=model_args['norm_obs'])
 
-    model = PPO(
+    model = SAC(
         'MlpPolicy',
         env,
         learning_rate=model_args['learning_rate'],
-        n_steps=model_args['n_steps'],
+        buffer_size=model_args['buffer_size'],
+        learning_starts=model_args['learning_starts'],
         batch_size=model_args['batch_size'],
-        n_epochs=model_args['n_epochs'],
+        tau=model_args['tau'],
+        train_freq=model_args['train_freq'],
+        gradient_steps=model_args['gradient_steps'],
         gamma=model_args['gamma'],
-        gae_lambda=model_args['gae_lambda'],
-        clip_range=model_args['clip_range'],
         ent_coef=model_args['ent_coef'],
-        vf_coef=model_args['vf_coef'],
-        max_grad_norm=model_args['max_grad_norm'],
-        target_kl=model_args['target_kl'],
         tensorboard_log=model_args['tensorboard_log'],
-        policy_kwargs=model_args['policy_kwargs'],
+        policy_kwargs=policy_kwargs,
         seed=model_args['seed']
     )
     env.save(log_dir+"/vecnormalize.pkl")
@@ -128,19 +124,20 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--motion_file', type=str, default="tuning_motion_whole")
-    parser.add_argument('--glob_n_steps', type=int, default=5e7)
-    parser.add_argument('--log_std_init', type=int, default=-3)
-    parser.add_argument('--learning_rate', type=float, default=3.0e-6)
-    parser.add_argument('--weight_decay', type=float, default=1.0e-5)
+    parser.add_argument('--glob_n_steps', type=int, default=2e7)
+    parser.add_argument('--learning_rate', type=float, default=0.0003)
+    parser.add_argument('--buffer_size', type=int, default=1000000)
+    parser.add_argument('--learning_starts', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--n_steps', type=int, default=4096)
-    parser.add_argument('--n_epochs', type=int, default=3)
-    parser.add_argument('--gae_lambda', type=float, default=0.95)
-    parser.add_argument('--clip_range', type=float, default=0.2)
-    parser.add_argument('--target_kl', type=float, default=0.05)
-    parser.add_argument('--seed', type=int, default=8)
-    parser.add_argument('--pi_vf', type=str, default="512 1024 512")
-    parser.add_argument('--ortho_init', type=bool, default=True)
+    parser.add_argument('--tau', type=float, default=0.005)
+    parser.add_argument('--train_freq', type=int, default=1)
+    parser.add_argument('--gradient_steps', type=int, default=1)
+    parser.add_argument('--ent_coef', type=str, default="auto_0.1")
+    parser.add_argument('--target_entropy', type=str, default="auto")
+    parser.add_argument('--log_std_init', type=float, default=-3.0)
+    parser.add_argument('--weight_decay', type=float, default=1.0e-5)
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--pi_vf', type=str, default="1024 512")
 
     args = parser.parse_args()
 

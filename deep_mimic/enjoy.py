@@ -1,6 +1,6 @@
 import time
 import torch.nn as nn
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, SAC
 import deep_mimic
 from stable_baselines3.common.cmd_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
@@ -83,7 +83,7 @@ args = parser.parse_args()
 # }
 
 dirs = {
-    "tuning_motion_whole": "2022-09-01 14:30:48.817682",
+    "tuning_motion_whole": "2024-01-30 16:39:17.390403",
     "00433": "2022-11-02 09:59:47.226551", #"2022-10-24 16:00:23.254204",  # "2022-10-20 14:27:10.251318",
     "52861": "2022-11-02 09:59:45.739750", #"2022-10-24 16:00:43.085142",  # "2022-10-20 14:27:52.137148",
     "69318": "",
@@ -100,7 +100,7 @@ env = make_vec_env(env_name, env_kwargs=dict(renders=True, arg_file=f"run_humano
 
 env = VecNormalize.load(log_dir+"vecnormalize.pkl", env)
 
-model = PPO.load(log_dir+"best_model", env=env)
+model = SAC.load(log_dir+"best_model", env=env)
 
 env.render(mode='human')
 
