@@ -132,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('--tau', type=float, default=0.005)
     parser.add_argument('--train_freq', type=int, default=1)
     parser.add_argument('--gradient_steps', type=int, default=1)
-    parser.add_argument('--ent_coef', type=str, default="auto_0.1")
+    parser.add_argument('--ent_coef', type=str, default="auto")
     parser.add_argument('--target_entropy', type=str, default="auto")
     parser.add_argument('--log_std_init', type=float, default=-3.0)
     parser.add_argument('--weight_decay', type=float, default=1.0e-5)

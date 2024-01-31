@@ -340,7 +340,7 @@ def test_pybullet():
     arg_parser = ArgParser()
     path = pybullet_data.getDataPath() + "/args/" + arg_file
     succ = arg_parser.load_file(path)
-    timeStep = 1. / 30
+    timeStep = 1. / 240
     _init_strategy = InitializationStrategy.START
 
     env = PyBulletDeepMimicEnv(arg_parser=arg_parser, enable_draw=True, pybullet_client=None,
@@ -382,7 +382,7 @@ def test_pybullet():
         env.set_action(0, action)
 
         env.update(timeStep)
-        time.sleep(1/30)
+        time.sleep(1/240)
 
     actions = np.array(actions)
 

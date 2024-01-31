@@ -8,9 +8,16 @@ import data as pybullet_data
 from deep_mimic.env.pybullet_deep_mimic_env_whole import PyBulletDeepMimicEnv, InitializationStrategy
 from pybullet_utils.arg_parser import ArgParser
 from pybullet_utils.logger import Logger
+from scipy.stats import truncnorm
 
 logger = logging.getLogger(__name__)
 
+class CheatingBox(gym.spaces.Box):
+    def __init__(self, low, high, shape=None, dtype=np.float32):
+        super().__init__(low, high, shape, dtype)
+
+    def sample(self):
+        return truncnorm.rvs(self.low, self.high, size=self.shape[0])
 
 class WholeDeepBulletEnv(gym.Env):
     """Base Gym environment for the DeepMimic motion imitation tasks."""
@@ -83,7 +90,7 @@ class WholeDeepBulletEnv(gym.Env):
             action_bound_min = self.scale_action(action_bound_min)
             action_bound_max = self.scale_action(action_bound_max)
 
-        self.action_space = spaces.Box(action_bound_min, action_bound_max)
+        self.action_space = CheatingBox(action_bound_min, action_bound_max)
 
         observation_min = np.array([0.0]+[-100.0]+[-4.0]*273+[-500.0]*234)
         observation_max = np.array([1.0]+[100.0]+[4.0]*273+[500.0]*234)
