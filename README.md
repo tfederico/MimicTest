@@ -1,2 +1,1 @@
-# ASLMimic
-Code for ASLMimic
+# Debug code for mimicry
