@@ -171,7 +171,7 @@ class WholeDeepBulletEnv(gym.Env):
             'error': self.internal_env._humanoid._info_err
         }
 
-        return state, reward, done, info
+        return state.astype(np.float32), reward, done, info
 
     def reset(self):
         # use the initialization strategy
@@ -202,7 +202,7 @@ class WholeDeepBulletEnv(gym.Env):
         state = np.array(self.state)
         if self._rescale_observations:
             state = self.scale_observation(state)
-        return state
+        return state.astype(np.float32)
 
     def render(self, mode='human', close=False):
         if mode == "human":
